@@ -2,14 +2,13 @@
 // Configuration de l'application Shadow GPT
 // Ton guide personnel pour la transformation
 
-// Configuration de la base de données Hostinger
-define('DB_HOST', 'localhost'); // Toujours localhost pour Hostinger
-define('DB_NAME', 'u114685281_shadowgpt'); 
-define('DB_USER', 'u114685281_shadowgpt'); 
-define('DB_PASS', '5zT$pu=8e');
-
-// Clé API OpenAI
-define('OPENAI_API_KEY', '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');
+// Load local configuration with secrets
+$localConfig = __DIR__ . '/config_local.php';
+if (file_exists($localConfig)) {
+    require_once $localConfig;
+} else {
+    die('Error: config_local.php not found. Please copy config_local.example.php to config_local.php and configure your settings.');
+}
 
 // Configuration de l'application
 define('APP_NAME', 'Shadow GPT - Guide Personnel');
