@@ -110,12 +110,13 @@ try {
             $prompt .= "\nRéponds uniquement avec la description améliorée, sans préambule ni explication.";
             
             try {
-                $enhanced = $openAI->generateAffirmation($prompt);
+                $systemPrompt = "Tu es un coach de vie bienveillant qui aide les gens à atteindre leurs objectifs personnels.";
+                $enhanced = $openAI->generateCustomText($prompt, $systemPrompt);
                 
                 if ($enhanced) {
                     echo json_encode(['success' => true, 'description' => $enhanced]);
                 } else {
-                    // Fallback if OpenAI fails
+                    // Fallback if OpenAI fails or no API key
                     $fallback = $description ?: "Challenge de transformation personnelle pour développer ta discipline et atteindre tes objectifs. Chaque jour compte, chaque effort te rapproche de la meilleure version de toi-même.";
                     echo json_encode(['success' => true, 'description' => $fallback, 'source' => 'fallback']);
                 }

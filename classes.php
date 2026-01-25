@@ -373,6 +373,43 @@ class OpenAIService {
         return $this->generateAffirmation();
     }
     
+    public function generateCustomText($prompt, $systemPrompt = '') {
+        if (empty($this->apiKey) || $this->apiKey === 'your_openai_api_key_here') {
+            return null; // Return null if no API key
+        }
+        
+        $data = [
+            'model' => 'gpt-3.5-turbo',
+            'messages' => [
+                ['role' => 'system', 'content' => $systemPrompt ?: 'Tu es un assistant IA bienveillant et motivant.'],
+                ['role' => 'user', 'content' => $prompt]
+            ],
+            'max_tokens' => 300,
+            'temperature' => 0.8
+        ];
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://api.openai.com/v1/chat/completions');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->apiKey
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200) {
+            $result = json_decode($response, true);
+            return $result['choices'][0]['message']['content'] ?? null;
+        }
+        
+        return null;
+    }
+    
     private function getRandomDefaultAffirmation() {
         $mantras = DEFAULT_MANTRAS;
         return $mantras[array_rand($mantras)];

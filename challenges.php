@@ -1,8 +1,4 @@
 <?php
-// Debug errors - REMOVE IN PRODUCTION
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
 // Start session before any output
 session_start();
 
