@@ -74,6 +74,31 @@ class Database {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
+        
+        CREATE TABLE IF NOT EXISTS challenges (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            duration_days INT NOT NULL,
+            start_date DATE NOT NULL,
+            end_date DATE NOT NULL,
+            status ENUM('active', 'completed', 'failed', 'archived') DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        
+        CREATE TABLE IF NOT EXISTS challenge_check_ins (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            challenge_id INT NOT NULL,
+            date DATE NOT NULL,
+            status ENUM('success', 'fail', 'skip') DEFAULT 'success',
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_challenge_date (challenge_id, date),
+            FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE
+        );
         ";
         
         $this->connection->exec($sql);
@@ -348,6 +373,43 @@ class OpenAIService {
         return $this->generateAffirmation();
     }
     
+    public function generateCustomText($prompt, $systemPrompt = '') {
+        if (empty($this->apiKey) || $this->apiKey === 'your_openai_api_key_here') {
+            return null; // Return null if no API key
+        }
+        
+        $data = [
+            'model' => 'gpt-3.5-turbo',
+            'messages' => [
+                ['role' => 'system', 'content' => $systemPrompt ?: 'Tu es un assistant IA bienveillant et motivant.'],
+                ['role' => 'user', 'content' => $prompt]
+            ],
+            'max_tokens' => 300,
+            'temperature' => 0.8
+        ];
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://api.openai.com/v1/chat/completions');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->apiKey
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200) {
+            $result = json_decode($response, true);
+            return $result['choices'][0]['message']['content'] ?? null;
+        }
+        
+        return null;
+    }
+    
     private function getRandomDefaultAffirmation() {
         $mantras = DEFAULT_MANTRAS;
         return $mantras[array_rand($mantras)];
@@ -586,6 +648,246 @@ class StreakService {
         $total = (int)($result['total'] ?? 0);
         error_log("calculateTrackingDays result: {$total}");
         return $total;
+    }
+}
+
+class ChallengeService {
+    private $db;
+    
+    public function __construct($database) {
+        $this->db = $database->getConnection();
+    }
+    
+    /**
+     * Create a new challenge
+     */
+    public function createChallenge($userId, $title, $description, $durationDays, $startDate = null) {
+        if (empty($title) || empty($durationDays)) {
+            return ['success' => false, 'message' => 'Titre et durée requis'];
+        }
+        
+        $startDate = $startDate ?: date('Y-m-d');
+        $endDate = date('Y-m-d', strtotime($startDate . ' + ' . ($durationDays - 1) . ' days'));
+        
+        $stmt = $this->db->prepare("
+            INSERT INTO challenges (user_id, title, description, duration_days, start_date, end_date, status) 
+            VALUES (?, ?, ?, ?, ?, ?, 'active')
+        ");
+        
+        try {
+            $stmt->execute([$userId, $title, $description, $durationDays, $startDate, $endDate]);
+            $challengeId = $this->db->lastInsertId();
+            
+            return [
+                'success' => true, 
+                'challenge_id' => $challengeId,
+                'message' => 'Challenge créé avec succès'
+            ];
+        } catch (Exception $e) {
+            error_log('Error creating challenge: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Erreur lors de la création du challenge'];
+        }
+    }
+    
+    /**
+     * Get all challenges for a user
+     */
+    public function getUserChallenges($userId, $status = null) {
+        $sql = "SELECT * FROM challenges WHERE user_id = ?";
+        $params = [$userId];
+        
+        if ($status) {
+            $sql .= " AND status = ?";
+            $params[] = $status;
+        }
+        
+        $sql .= " ORDER BY created_at DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Get a specific challenge
+     */
+    public function getChallenge($challengeId, $userId) {
+        $stmt = $this->db->prepare("SELECT * FROM challenges WHERE id = ? AND user_id = ?");
+        $stmt->execute([$challengeId, $userId]);
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Update challenge description (for AI enhancement)
+     */
+    public function updateChallengeDescription($challengeId, $userId, $description) {
+        $stmt = $this->db->prepare("
+            UPDATE challenges 
+            SET description = ?, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ? AND user_id = ?
+        ");
+        
+        return $stmt->execute([$description, $challengeId, $userId]);
+    }
+    
+    /**
+     * Record a daily check-in
+     */
+    public function checkIn($challengeId, $userId, $date, $status = 'success', $notes = '') {
+        // Verify challenge belongs to user
+        $challenge = $this->getChallenge($challengeId, $userId);
+        if (!$challenge) {
+            return ['success' => false, 'message' => 'Challenge non trouvé'];
+        }
+        
+        // Check if date is within challenge period
+        if ($date < $challenge['start_date'] || $date > $challenge['end_date']) {
+            return ['success' => false, 'message' => 'Date hors de la période du challenge'];
+        }
+        
+        $stmt = $this->db->prepare("
+            INSERT INTO challenge_check_ins (challenge_id, date, status, notes) 
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE status = ?, notes = ?
+        ");
+        
+        try {
+            $stmt->execute([$challengeId, $date, $status, $notes, $status, $notes]);
+            
+            // Update challenge status if needed
+            $this->updateChallengeStatus($challengeId);
+            
+            return ['success' => true, 'message' => 'Check-in enregistré'];
+        } catch (Exception $e) {
+            error_log('Error recording check-in: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Erreur lors de l\'enregistrement'];
+        }
+    }
+    
+    /**
+     * Get check-ins for a challenge
+     */
+    public function getChallengeCheckIns($challengeId, $userId) {
+        // Verify challenge belongs to user
+        $challenge = $this->getChallenge($challengeId, $userId);
+        if (!$challenge) {
+            return [];
+        }
+        
+        $stmt = $this->db->prepare("
+            SELECT * FROM challenge_check_ins 
+            WHERE challenge_id = ? 
+            ORDER BY date ASC
+        ");
+        $stmt->execute([$challengeId]);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Get challenge progress statistics
+     */
+    public function getChallengeProgress($challengeId, $userId) {
+        $challenge = $this->getChallenge($challengeId, $userId);
+        if (!$challenge) {
+            return null;
+        }
+        
+        $checkIns = $this->getChallengeCheckIns($challengeId, $userId);
+        
+        $totalDays = $challenge['duration_days'];
+        $successDays = 0;
+        $failDays = 0;
+        $skippedDays = 0;
+        $currentStreak = 0;
+        $longestStreak = 0;
+        $tempStreak = 0;
+        
+        foreach ($checkIns as $checkIn) {
+            if ($checkIn['status'] === 'success') {
+                $successDays++;
+                $tempStreak++;
+                $currentStreak = $tempStreak;
+            } else if ($checkIn['status'] === 'fail') {
+                $failDays++;
+                $longestStreak = max($longestStreak, $tempStreak);
+                $tempStreak = 0;
+            } else {
+                $skippedDays++;
+            }
+        }
+        
+        $longestStreak = max($longestStreak, $tempStreak);
+        $completionRate = $totalDays > 0 ? round(($successDays / $totalDays) * 100, 1) : 0;
+        
+        return [
+            'total_days' => $totalDays,
+            'checked_in_days' => count($checkIns),
+            'success_days' => $successDays,
+            'fail_days' => $failDays,
+            'skipped_days' => $skippedDays,
+            'current_streak' => $currentStreak,
+            'longest_streak' => $longestStreak,
+            'completion_rate' => $completionRate,
+            'days_remaining' => max(0, (strtotime($challenge['end_date']) - strtotime(date('Y-m-d'))) / 86400)
+        ];
+    }
+    
+    /**
+     * Update challenge status based on progress
+     */
+    private function updateChallengeStatus($challengeId) {
+        $stmt = $this->db->prepare("SELECT * FROM challenges WHERE id = ?");
+        $stmt->execute([$challengeId]);
+        $challenge = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$challenge) return;
+        
+        $today = date('Y-m-d');
+        $endDate = $challenge['end_date'];
+        
+        // Check if challenge has ended
+        if ($today > $endDate && $challenge['status'] === 'active') {
+            // Determine if completed or failed based on check-ins
+            $checkInsStmt = $this->db->prepare("
+                SELECT COUNT(*) as total, 
+                       SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success_count,
+                       SUM(CASE WHEN status = 'fail' THEN 1 ELSE 0 END) as fail_count
+                FROM challenge_check_ins 
+                WHERE challenge_id = ?
+            ");
+            $checkInsStmt->execute([$challengeId]);
+            $stats = $checkInsStmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Consider completed if at least 80% success rate
+            $successRate = $stats['total'] > 0 ? ($stats['success_count'] / $challenge['duration_days']) : 0;
+            $newStatus = ($successRate >= 0.8) ? 'completed' : 'failed';
+            
+            $updateStmt = $this->db->prepare("UPDATE challenges SET status = ? WHERE id = ?");
+            $updateStmt->execute([$newStatus, $challengeId]);
+        }
+    }
+    
+    /**
+     * Delete a challenge
+     */
+    public function deleteChallenge($challengeId, $userId) {
+        $stmt = $this->db->prepare("DELETE FROM challenges WHERE id = ? AND user_id = ?");
+        return $stmt->execute([$challengeId, $userId]);
+    }
+    
+    /**
+     * Archive a challenge
+     */
+    public function archiveChallenge($challengeId, $userId) {
+        $stmt = $this->db->prepare("
+            UPDATE challenges 
+            SET status = 'archived' 
+            WHERE id = ? AND user_id = ?
+        ");
+        return $stmt->execute([$challengeId, $userId]);
     }
     
     public function getBestStreaks($userId) {

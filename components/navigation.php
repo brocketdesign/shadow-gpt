@@ -12,6 +12,9 @@
             </div>
             
             <div class="flex items-center space-x-3">
+                <a href="challenges.php" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-semibold no-print">
+                    🎯 Challenges
+                </a>
                 <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-semibold no-print">
                     🖨️ Imprimer PDF
                 </button>
