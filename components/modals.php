@@ -221,28 +221,59 @@
             <div class="bg-teal-50 rounded-lg p-6">
                 <h3 class="text-xl font-semibold text-teal-700 mb-4 flex items-center justify-between">
                     <span>📊 Mes Trackers Personnalisés</span>
-                    <button type="button" onclick="openAddTrackerForm()" class="text-sm bg-teal-600 text-white px-3 py-1 rounded-lg hover:bg-teal-700">
+                    <button type="button" onclick="openTrackerSelector()" class="text-sm bg-teal-600 text-white px-3 py-1 rounded-lg hover:bg-teal-700">
                         + Ajouter
                     </button>
                 </h3>
                 
-                <!-- Add tracker form (hidden by default) -->
-                <div id="addTrackerForm" class="hidden mb-4 p-4 bg-white rounded-lg border border-teal-200">
+                <!-- Tracker Selector Modal (hidden by default) -->
+                <div id="trackerSelectorModal" class="hidden mb-4 p-4 bg-white rounded-lg border border-teal-200">
+                    <h4 class="font-semibold text-teal-700 mb-3">Sélectionner un tracker existant ou en créer un nouveau</h4>
+                    
+                    <!-- Existing trackers list -->
+                    <div id="existingTrackersList" class="space-y-2 mb-4 max-h-48 overflow-y-auto">
+                        <p class="text-sm text-gray-500 italic">Chargement...</p>
+                    </div>
+                    
+                    <!-- Divider -->
+                    <div class="border-t border-teal-200 my-4"></div>
+                    
+                    <!-- Create new tracker -->
                     <div class="flex items-center space-x-3">
-                        <input type="text" id="newTrackerTitle" placeholder="Nom du tracker (ex: Consommation bière)" 
+                        <input type="text" id="newTrackerTitle" placeholder="Créer un nouveau tracker..." 
                                class="flex-1 px-3 py-2 border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
-                        <button type="button" onclick="createTracker()" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                        <button type="button" onclick="createAndAddTracker()" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
                             Créer
                         </button>
-                        <button type="button" onclick="closeAddTrackerForm()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    </div>
+                    
+                    <div class="mt-4 text-right">
+                        <button type="button" onclick="closeTrackerSelector()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Amount input modal (hidden by default) -->
+                <div id="trackerAmountModal" class="hidden mb-4 p-4 bg-white rounded-lg border border-teal-200">
+                    <h4 class="font-semibold text-teal-700 mb-3" id="amountModalTitle">Ajouter un montant</h4>
+                    <input type="hidden" id="selectedTrackerId">
+                    <div class="flex items-center space-x-3">
+                        <input type="number" id="trackerAmountInput" step="0.01" placeholder="Montant" 
+                               class="flex-1 px-3 py-2 border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                        <span class="text-teal-600">€</span>
+                        <button type="button" onclick="confirmAddTrackerEntry()" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                            Ajouter
+                        </button>
+                        <button type="button" onclick="closeAmountModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
                             Annuler
                         </button>
                     </div>
                 </div>
                 
-                <!-- Tracker list -->
+                <!-- Tracker list for this day -->
                 <div id="customTrackersList" class="space-y-3">
-                    <p class="text-teal-600 text-sm italic" id="noTrackersMessage">Aucun tracker personnalisé. Cliquez sur "+ Ajouter" pour en créer un.</p>
+                    <p class="text-teal-600 text-sm italic" id="noTrackersMessage">Aucun tracker ajouté pour cette journée. Cliquez sur "+ Ajouter" pour en ajouter un.</p>
                 </div>
             </div>
             
@@ -352,17 +383,119 @@ function updateScores() {
 }
 
 // Custom Trackers Functions
-function openAddTrackerForm() {
-    document.getElementById('addTrackerForm').classList.remove('hidden');
-    document.getElementById('newTrackerTitle').focus();
+
+// Open the tracker selector (shows all user's trackers with monthly totals)
+async function openTrackerSelector() {
+    const selectorModal = document.getElementById('trackerSelectorModal');
+    selectorModal.classList.remove('hidden');
+    
+    const currentDate = document.getElementById('dayDate').value;
+    
+    try {
+        const response = await fetch(`api/tracking.php?action=get_all_trackers&date=${currentDate}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderTrackerSelector(data.trackers);
+        }
+    } catch (error) {
+        console.error('Error loading trackers:', error);
+    }
 }
 
-function closeAddTrackerForm() {
-    document.getElementById('addTrackerForm').classList.add('hidden');
+function closeTrackerSelector() {
+    document.getElementById('trackerSelectorModal').classList.add('hidden');
     document.getElementById('newTrackerTitle').value = '';
 }
 
-async function createTracker() {
+function renderTrackerSelector(trackers) {
+    const container = document.getElementById('existingTrackersList');
+    
+    if (!trackers || trackers.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-500 italic">Aucun tracker créé. Créez-en un nouveau ci-dessous.</p>';
+        return;
+    }
+    
+    let html = '';
+    trackers.forEach(tracker => {
+        const trackerId = parseInt(tracker.tracker_id, 10);
+        const monthlyTotal = parseFloat(tracker.monthly_total).toFixed(2);
+        html += `
+            <div class="flex items-center justify-between p-3 bg-teal-50 rounded-lg border border-teal-200 hover:bg-teal-100 cursor-pointer transition-colors"
+                 onclick="selectTrackerForEntry(${trackerId}, '${escapeHtml(tracker.title)}')">
+                <div>
+                    <div class="font-semibold text-teal-700">${escapeHtml(tracker.title)}</div>
+                    <div class="text-xs text-teal-600">Total ce mois: <span class="font-bold">${monthlyTotal} €</span></div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-teal-500">➕</span>
+                    <button type="button" onclick="event.stopPropagation(); deleteTrackerDefinition(${trackerId}, '${escapeHtml(tracker.title)}')" 
+                            class="text-red-500 hover:text-red-700 p-1" title="Supprimer ce tracker définitivement">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// Select a tracker to add an entry for this date
+function selectTrackerForEntry(trackerId, trackerTitle) {
+    closeTrackerSelector();
+    
+    document.getElementById('selectedTrackerId').value = trackerId;
+    document.getElementById('amountModalTitle').textContent = `Ajouter un montant pour "${trackerTitle}"`;
+    document.getElementById('trackerAmountInput').value = '';
+    document.getElementById('trackerAmountModal').classList.remove('hidden');
+    document.getElementById('trackerAmountInput').focus();
+}
+
+function closeAmountModal() {
+    document.getElementById('trackerAmountModal').classList.add('hidden');
+    document.getElementById('trackerAmountInput').value = '';
+}
+
+// Confirm adding a tracker entry for this date
+async function confirmAddTrackerEntry() {
+    const trackerId = document.getElementById('selectedTrackerId').value;
+    const amount = parseFloat(document.getElementById('trackerAmountInput').value) || 0;
+    const currentDate = document.getElementById('dayDate').value;
+    
+    if (amount === 0) {
+        alert('Veuillez entrer un montant');
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'update_custom_tracker_entry');
+        formData.append('tracker_id', trackerId);
+        formData.append('date', currentDate);
+        formData.append('amount', amount);
+        
+        const response = await fetch('api/tracking.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeAmountModal();
+            loadCustomTrackers(currentDate);
+        } else {
+            alert(data.message || 'Erreur lors de l\'ajout');
+        }
+    } catch (error) {
+        console.error('Error adding tracker entry:', error);
+        alert('Erreur de connexion');
+    }
+}
+
+// Create a new tracker and immediately add an entry
+async function createAndAddTracker() {
     const titleInput = document.getElementById('newTrackerTitle');
     const title = titleInput.value.trim();
     
@@ -384,10 +517,9 @@ async function createTracker() {
         const data = await response.json();
         
         if (data.success) {
-            closeAddTrackerForm();
-            // Reload trackers
-            const currentDate = document.getElementById('dayDate').value;
-            loadCustomTrackers(currentDate);
+            titleInput.value = '';
+            // Now ask for the amount
+            selectTrackerForEntry(data.tracker_id, title);
         } else {
             alert(data.message || 'Erreur lors de la création du tracker');
         }
@@ -397,8 +529,9 @@ async function createTracker() {
     }
 }
 
-async function deleteTracker(trackerId, trackerTitle) {
-    if (!confirm(`Supprimer le tracker "${trackerTitle}" ? Cette action supprimera toutes les données associées.`)) {
+// Delete a tracker definition (and all its entries)
+async function deleteTrackerDefinition(trackerId, trackerTitle) {
+    if (!confirm(`Supprimer définitivement le tracker "${trackerTitle}" ?\n\nCette action supprimera le tracker ET toutes ses entrées sur toutes les dates.`)) {
         return;
     }
     
@@ -416,6 +549,8 @@ async function deleteTracker(trackerId, trackerTitle) {
         
         if (data.success) {
             const currentDate = document.getElementById('dayDate').value;
+            // Refresh both the selector and the list
+            openTrackerSelector();
             loadCustomTrackers(currentDate);
         } else {
             alert('Erreur lors de la suppression du tracker');
@@ -426,6 +561,39 @@ async function deleteTracker(trackerId, trackerTitle) {
     }
 }
 
+// Remove a tracker entry from this specific date only
+async function removeTrackerEntry(trackerId, trackerTitle) {
+    if (!confirm(`Retirer "${trackerTitle}" de cette journée ?\n\nLe tracker restera disponible pour d'autres dates.`)) {
+        return;
+    }
+    
+    const currentDate = document.getElementById('dayDate').value;
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'delete_tracker_entry');
+        formData.append('tracker_id', trackerId);
+        formData.append('date', currentDate);
+        
+        const response = await fetch('api/tracking.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            loadCustomTrackers(currentDate);
+        } else {
+            alert('Erreur lors de la suppression');
+        }
+    } catch (error) {
+        console.error('Error removing tracker entry:', error);
+        alert('Erreur de connexion');
+    }
+}
+
+// Update a tracker entry amount
 async function updateTrackerEntry(trackerId, inputElement) {
     const amount = parseFloat(inputElement.value) || 0;
     const currentDate = document.getElementById('dayDate').value;
@@ -456,6 +624,7 @@ async function updateTrackerEntry(trackerId, inputElement) {
     }
 }
 
+// Load trackers for this specific date
 async function loadCustomTrackers(date) {
     try {
         const response = await fetch(`api/tracking.php?action=get_custom_trackers&date=${date}`);
@@ -469,6 +638,7 @@ async function loadCustomTrackers(date) {
     }
 }
 
+// Render trackers added for this day
 function renderCustomTrackers(trackers) {
     const container = document.getElementById('customTrackersList');
     const noTrackersMessage = document.getElementById('noTrackersMessage');
@@ -490,7 +660,7 @@ function renderCustomTrackers(trackers) {
                 <div class="flex-1">
                     <div class="font-semibold text-teal-700">${escapeHtml(tracker.title)}</div>
                     <div class="text-xs text-teal-600">
-                        Total ce mois: <span id="tracker-total-${trackerId}" class="font-bold">${parseFloat(tracker.monthly_total).toFixed(2)}</span>
+                        Total ce mois: <span id="tracker-total-${trackerId}" class="font-bold">${parseFloat(tracker.monthly_total).toFixed(2)}</span> €
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
@@ -502,9 +672,9 @@ function renderCustomTrackers(trackers) {
                                class="w-24 px-2 py-1 text-right border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
                         <span class="ml-1 text-teal-600">€</span>
                     </div>
-                    <button type="button" onclick="deleteTracker(${trackerId}, '${escapeHtml(tracker.title)}')" 
-                            class="text-red-500 hover:text-red-700 p-1" title="Supprimer ce tracker">
-                        🗑️
+                    <button type="button" onclick="removeTrackerEntry(${trackerId}, '${escapeHtml(tracker.title)}')" 
+                            class="text-orange-500 hover:text-orange-700 p-1" title="Retirer de cette journée">
+                        ❌
                     </button>
                 </div>
             </div>

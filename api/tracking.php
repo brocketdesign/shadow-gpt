@@ -156,6 +156,7 @@ try {
             break;
             
         case 'get_custom_trackers':
+            // Get trackers added for this specific date only
             $user = $userService->getCurrentUser();
             if (!$user) {
                 echo json_encode(['success' => false, 'message' => 'Non connecté']);
@@ -170,6 +171,7 @@ try {
             $year = (int)$dateObj->format('Y');
             $month = (int)$dateObj->format('m');
             
+            // Get only entries for this specific date
             $trackers = $customTrackerService->getEntriesForDate($user['id'], $date);
             $monthlyTotals = $customTrackerService->getMonthlyTotals($user['id'], $year, $month);
             
@@ -184,6 +186,50 @@ try {
             }
             
             echo json_encode(['success' => true, 'trackers' => $trackers]);
+            break;
+            
+        case 'get_all_trackers':
+            // Get all user's trackers with monthly totals (for selection dropdown)
+            $user = $userService->getCurrentUser();
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'Non connecté']);
+                exit;
+            }
+            
+            $customTrackerService = new CustomTrackerService($database);
+            $date = $_GET['date'] ?? date('Y-m-d');
+            
+            // Get year and month from date
+            $dateObj = new DateTime($date);
+            $year = (int)$dateObj->format('Y');
+            $month = (int)$dateObj->format('m');
+            
+            // Get all trackers with monthly totals
+            $trackers = $customTrackerService->getAllTrackersWithMonthlyTotals($user['id'], $year, $month);
+            
+            echo json_encode(['success' => true, 'trackers' => $trackers]);
+            break;
+            
+        case 'delete_tracker_entry':
+            // Delete a tracker entry for a specific date (remove from this day only)
+            $user = $userService->getCurrentUser();
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'Non connecté']);
+                exit;
+            }
+            
+            $trackerId = $_POST['tracker_id'] ?? '';
+            $date = $_POST['date'] ?? '';
+            
+            if (empty($trackerId) || empty($date)) {
+                echo json_encode(['success' => false, 'message' => 'Données manquantes']);
+                exit;
+            }
+            
+            $customTrackerService = new CustomTrackerService($database);
+            $result = $customTrackerService->deleteTrackerEntry($trackerId, $date);
+            
+            echo json_encode(['success' => $result]);
             break;
             
         case 'create_custom_tracker':

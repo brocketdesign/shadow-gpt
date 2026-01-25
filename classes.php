@@ -631,16 +631,33 @@ class CustomTrackerService {
         return true;
     }
     
-    // Get all tracker entries for a user and date
+    // Get only tracker entries that exist for a specific date (not all trackers)
     public function getEntriesForDate($userId, $date) {
         $stmt = $this->db->prepare("
-            SELECT ct.id as tracker_id, ct.title, COALESCE(cte.amount, 0) as amount
+            SELECT ct.id as tracker_id, ct.title, cte.amount
             FROM custom_trackers ct
-            LEFT JOIN custom_tracker_entries cte ON ct.id = cte.tracker_id AND cte.date = ?
+            INNER JOIN custom_tracker_entries cte ON ct.id = cte.tracker_id AND cte.date = ?
             WHERE ct.user_id = ?
             ORDER BY ct.title
         ");
         $stmt->execute([$date, $userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Get all trackers with their monthly totals (for selection list)
+    public function getAllTrackersWithMonthlyTotals($userId, $year, $month) {
+        $startDate = sprintf('%04d-%02d-01', $year, $month);
+        $endDate = date('Y-m-t', strtotime($startDate));
+        
+        $stmt = $this->db->prepare("
+            SELECT ct.id as tracker_id, ct.title, COALESCE(SUM(cte.amount), 0) as monthly_total
+            FROM custom_trackers ct
+            LEFT JOIN custom_tracker_entries cte ON ct.id = cte.tracker_id AND cte.date BETWEEN ? AND ?
+            WHERE ct.user_id = ?
+            GROUP BY ct.id, ct.title
+            ORDER BY ct.title
+        ");
+        $stmt->execute([$startDate, $endDate, $userId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
@@ -659,6 +676,12 @@ class CustomTrackerService {
         ");
         $stmt->execute([$startDate, $endDate, $userId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Delete a tracker entry for a specific date
+    public function deleteTrackerEntry($trackerId, $date) {
+        $stmt = $this->db->prepare("DELETE FROM custom_tracker_entries WHERE tracker_id = ? AND date = ?");
+        return $stmt->execute([$trackerId, $date]);
     }
 }
 
