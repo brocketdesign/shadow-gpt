@@ -99,6 +99,27 @@ class Database {
             UNIQUE KEY unique_challenge_date (challenge_id, date),
             FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE
         );
+        
+        CREATE TABLE IF NOT EXISTS custom_trackers (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_user_tracker (user_id, title),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        
+        CREATE TABLE IF NOT EXISTS custom_tracker_entries (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            tracker_id INT NOT NULL,
+            date DATE NOT NULL,
+            amount DECIMAL(10,2) DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_tracker_date (tracker_id, date),
+            FOREIGN KEY (tracker_id) REFERENCES custom_trackers(id) ON DELETE CASCADE
+        );
         ";
         
         $this->connection->exec($sql);
@@ -536,6 +557,107 @@ class TrackingService {
         ");
         
         $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
+
+class CustomTrackerService {
+    private $db;
+    
+    public function __construct($database) {
+        $this->db = $database->getConnection();
+    }
+    
+    // Get all trackers for a user
+    public function getUserTrackers($userId) {
+        $stmt = $this->db->prepare("SELECT * FROM custom_trackers WHERE user_id = ? ORDER BY title");
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Create a new tracker
+    public function createTracker($userId, $title) {
+        $title = trim($title);
+        if (empty($title)) {
+            return ['success' => false, 'message' => 'Titre requis'];
+        }
+        
+        try {
+            $stmt = $this->db->prepare("INSERT INTO custom_trackers (user_id, title) VALUES (?, ?)");
+            $stmt->execute([$userId, $title]);
+            $trackerId = $this->db->lastInsertId();
+            
+            return [
+                'success' => true, 
+                'tracker_id' => $trackerId,
+                'title' => $title
+            ];
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                return ['success' => false, 'message' => 'Ce tracker existe déjà'];
+            }
+            throw $e;
+        }
+    }
+    
+    // Delete a tracker
+    public function deleteTracker($trackerId, $userId) {
+        $stmt = $this->db->prepare("DELETE FROM custom_trackers WHERE id = ? AND user_id = ?");
+        return $stmt->execute([$trackerId, $userId]);
+    }
+    
+    // Get tracker entry for a specific date
+    public function getTrackerEntry($trackerId, $date) {
+        $stmt = $this->db->prepare("SELECT * FROM custom_tracker_entries WHERE tracker_id = ? AND date = ?");
+        $stmt->execute([$trackerId, $date]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    // Set or update tracker entry for a date
+    public function setTrackerEntry($trackerId, $date, $amount) {
+        $amount = floatval($amount);
+        
+        // Check if entry exists
+        $existing = $this->getTrackerEntry($trackerId, $date);
+        
+        if ($existing) {
+            $stmt = $this->db->prepare("UPDATE custom_tracker_entries SET amount = ? WHERE tracker_id = ? AND date = ?");
+            $stmt->execute([$amount, $trackerId, $date]);
+        } else {
+            $stmt = $this->db->prepare("INSERT INTO custom_tracker_entries (tracker_id, date, amount) VALUES (?, ?, ?)");
+            $stmt->execute([$trackerId, $date, $amount]);
+        }
+        
+        return true;
+    }
+    
+    // Get all tracker entries for a user and date
+    public function getEntriesForDate($userId, $date) {
+        $stmt = $this->db->prepare("
+            SELECT ct.id as tracker_id, ct.title, COALESCE(cte.amount, 0) as amount
+            FROM custom_trackers ct
+            LEFT JOIN custom_tracker_entries cte ON ct.id = cte.tracker_id AND cte.date = ?
+            WHERE ct.user_id = ?
+            ORDER BY ct.title
+        ");
+        $stmt->execute([$date, $userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Get monthly totals for all trackers
+    public function getMonthlyTotals($userId, $year, $month) {
+        $startDate = sprintf('%04d-%02d-01', $year, $month);
+        $endDate = date('Y-m-t', strtotime($startDate));
+        
+        $stmt = $this->db->prepare("
+            SELECT ct.id as tracker_id, ct.title, COALESCE(SUM(cte.amount), 0) as monthly_total
+            FROM custom_trackers ct
+            LEFT JOIN custom_tracker_entries cte ON ct.id = cte.tracker_id AND cte.date BETWEEN ? AND ?
+            WHERE ct.user_id = ?
+            GROUP BY ct.id, ct.title
+            ORDER BY ct.title
+        ");
+        $stmt->execute([$startDate, $endDate, $userId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

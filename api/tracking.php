@@ -155,6 +155,110 @@ try {
             }
             break;
             
+        case 'get_custom_trackers':
+            $user = $userService->getCurrentUser();
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'Non connecté']);
+                exit;
+            }
+            
+            $customTrackerService = new CustomTrackerService($database);
+            $date = $_GET['date'] ?? date('Y-m-d');
+            
+            // Get year and month from date
+            $dateObj = new DateTime($date);
+            $year = (int)$dateObj->format('Y');
+            $month = (int)$dateObj->format('m');
+            
+            $trackers = $customTrackerService->getEntriesForDate($user['id'], $date);
+            $monthlyTotals = $customTrackerService->getMonthlyTotals($user['id'], $year, $month);
+            
+            // Merge monthly totals into trackers
+            $monthlyMap = [];
+            foreach ($monthlyTotals as $total) {
+                $monthlyMap[$total['tracker_id']] = $total['monthly_total'];
+            }
+            
+            foreach ($trackers as &$tracker) {
+                $tracker['monthly_total'] = $monthlyMap[$tracker['tracker_id']] ?? 0;
+            }
+            
+            echo json_encode(['success' => true, 'trackers' => $trackers]);
+            break;
+            
+        case 'create_custom_tracker':
+            $user = $userService->getCurrentUser();
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'Non connecté']);
+                exit;
+            }
+            
+            $title = $_POST['title'] ?? '';
+            if (empty(trim($title))) {
+                echo json_encode(['success' => false, 'message' => 'Titre requis']);
+                exit;
+            }
+            
+            $customTrackerService = new CustomTrackerService($database);
+            $result = $customTrackerService->createTracker($user['id'], $title);
+            echo json_encode($result);
+            break;
+            
+        case 'delete_custom_tracker':
+            $user = $userService->getCurrentUser();
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'Non connecté']);
+                exit;
+            }
+            
+            $trackerId = $_POST['tracker_id'] ?? '';
+            if (empty($trackerId)) {
+                echo json_encode(['success' => false, 'message' => 'Tracker ID requis']);
+                exit;
+            }
+            
+            $customTrackerService = new CustomTrackerService($database);
+            $result = $customTrackerService->deleteTracker($trackerId, $user['id']);
+            echo json_encode(['success' => $result]);
+            break;
+            
+        case 'update_custom_tracker_entry':
+            $user = $userService->getCurrentUser();
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'Non connecté']);
+                exit;
+            }
+            
+            $trackerId = $_POST['tracker_id'] ?? '';
+            $date = $_POST['date'] ?? '';
+            $amount = $_POST['amount'] ?? 0;
+            
+            if (empty($trackerId) || empty($date)) {
+                echo json_encode(['success' => false, 'message' => 'Données manquantes']);
+                exit;
+            }
+            
+            $customTrackerService = new CustomTrackerService($database);
+            $result = $customTrackerService->setTrackerEntry($trackerId, $date, $amount);
+            
+            // Return updated monthly total
+            $dateObj = new DateTime($date);
+            $year = (int)$dateObj->format('Y');
+            $month = (int)$dateObj->format('m');
+            $monthlyTotals = $customTrackerService->getMonthlyTotals($user['id'], $year, $month);
+            
+            // Find the specific tracker's monthly total
+            $monthlyTotal = 0;
+            foreach ($monthlyTotals as $total) {
+                if ($total['tracker_id'] == $trackerId) {
+                    $monthlyTotal = $total['monthly_total'];
+                    break;
+                }
+            }
+            
+            echo json_encode(['success' => $result, 'monthly_total' => $monthlyTotal]);
+            break;
+            
         default:
             echo json_encode(['success' => false, 'message' => 'Action non reconnue: ' . $action]);
             break;
