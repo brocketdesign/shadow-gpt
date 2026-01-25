@@ -683,6 +683,42 @@ class CustomTrackerService {
         $stmt = $this->db->prepare("DELETE FROM custom_tracker_entries WHERE tracker_id = ? AND date = ?");
         return $stmt->execute([$trackerId, $date]);
     }
+    
+    // Get all entries for a month with full details (for dashboard)
+    public function getMonthlyEntriesDetailed($userId, $year, $month) {
+        $startDate = sprintf('%04d-%02d-01', $year, $month);
+        $endDate = date('Y-m-t', strtotime($startDate));
+        
+        $stmt = $this->db->prepare("
+            SELECT cte.date, cte.amount, ct.id as tracker_id, ct.title
+            FROM custom_tracker_entries cte
+            INNER JOIN custom_trackers ct ON cte.tracker_id = ct.id
+            WHERE ct.user_id = ?
+            AND cte.date BETWEEN ? AND ?
+            ORDER BY cte.date DESC, ct.title ASC
+        ");
+        $stmt->execute([$userId, $startDate, $endDate]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Get summary stats for dashboard
+    public function getMonthlyStats($userId, $year, $month) {
+        $startDate = sprintf('%04d-%02d-01', $year, $month);
+        $endDate = date('Y-m-t', strtotime($startDate));
+        
+        // Total amount for the month
+        $stmt = $this->db->prepare("
+            SELECT COALESCE(SUM(cte.amount), 0) as total_amount,
+                   COUNT(DISTINCT cte.date) as days_with_entries,
+                   COUNT(cte.id) as total_entries
+            FROM custom_tracker_entries cte
+            INNER JOIN custom_trackers ct ON cte.tracker_id = ct.id
+            WHERE ct.user_id = ?
+            AND cte.date BETWEEN ? AND ?
+        ");
+        $stmt->execute([$userId, $startDate, $endDate]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
 
 class StreakService {

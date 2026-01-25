@@ -305,6 +305,36 @@ try {
             echo json_encode(['success' => $result, 'monthly_total' => $monthlyTotal]);
             break;
             
+        case 'get_trackers_dashboard':
+            // Get all data for the trackers dashboard
+            $user = $userService->getCurrentUser();
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'Non connecté']);
+                exit;
+            }
+            
+            $year = (int)($_GET['year'] ?? date('Y'));
+            $month = (int)($_GET['month'] ?? date('m'));
+            
+            $customTrackerService = new CustomTrackerService($database);
+            
+            // Get summary stats
+            $stats = $customTrackerService->getMonthlyStats($user['id'], $year, $month);
+            
+            // Get totals by tracker
+            $totals = $customTrackerService->getMonthlyTotals($user['id'], $year, $month);
+            
+            // Get detailed entries
+            $entries = $customTrackerService->getMonthlyEntriesDetailed($user['id'], $year, $month);
+            
+            echo json_encode([
+                'success' => true,
+                'stats' => $stats,
+                'totals' => $totals,
+                'entries' => $entries
+            ]);
+            break;
+            
         default:
             echo json_encode(['success' => false, 'message' => 'Action non reconnue: ' . $action]);
             break;

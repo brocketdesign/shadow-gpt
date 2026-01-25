@@ -273,7 +273,7 @@
                 
                 <!-- Tracker list for this day -->
                 <div id="customTrackersList" class="space-y-3">
-                    <p class="text-teal-600 text-sm italic" id="noTrackersMessage">Aucun tracker ajouté pour cette journée. Cliquez sur "+ Ajouter" pour en ajouter un.</p>
+                    <p class="text-teal-600 text-sm italic">Chargement des trackers...</p>
                 </div>
             </div>
             
@@ -383,6 +383,40 @@ function updateScores() {
 }
 
 // Custom Trackers Functions
+
+// Reset all tracker UI state (call this when opening a new date)
+function resetTrackerState() {
+    // Hide all modals/forms
+    const selectorModal = document.getElementById('trackerSelectorModal');
+    const amountModal = document.getElementById('trackerAmountModal');
+    
+    if (selectorModal) selectorModal.classList.add('hidden');
+    if (amountModal) amountModal.classList.add('hidden');
+    
+    // Clear inputs
+    const newTrackerTitle = document.getElementById('newTrackerTitle');
+    const trackerAmountInput = document.getElementById('trackerAmountInput');
+    const selectedTrackerId = document.getElementById('selectedTrackerId');
+    
+    if (newTrackerTitle) newTrackerTitle.value = '';
+    if (trackerAmountInput) trackerAmountInput.value = '';
+    if (selectedTrackerId) selectedTrackerId.value = '';
+    
+    // Reset the trackers list to loading state (use innerHTML, don't manipulate DOM nodes)
+    const container = document.getElementById('customTrackersList');
+    if (container) {
+        container.innerHTML = '<p class="text-teal-600 text-sm italic">Chargement des trackers...</p>';
+    }
+    
+    // Reset existing trackers list in selector
+    const existingTrackersList = document.getElementById('existingTrackersList');
+    if (existingTrackersList) {
+        existingTrackersList.innerHTML = '<p class="text-sm text-gray-500 italic">Chargement...</p>';
+    }
+}
+
+// Make it globally available
+window.resetTrackerState = resetTrackerState;
 
 // Open the tracker selector (shows all user's trackers with monthly totals)
 async function openTrackerSelector() {
@@ -641,16 +675,11 @@ async function loadCustomTrackers(date) {
 // Render trackers added for this day
 function renderCustomTrackers(trackers) {
     const container = document.getElementById('customTrackersList');
-    const noTrackersMessage = document.getElementById('noTrackersMessage');
     
     if (!trackers || trackers.length === 0) {
-        container.innerHTML = '';
-        container.appendChild(noTrackersMessage);
-        noTrackersMessage.classList.remove('hidden');
+        container.innerHTML = '<p class="text-teal-600 text-sm italic">Aucun tracker ajouté pour cette journée. Cliquez sur "+ Ajouter" pour en ajouter un.</p>';
         return;
     }
-    
-    noTrackersMessage.classList.add('hidden');
     
     let html = '';
     trackers.forEach(tracker => {

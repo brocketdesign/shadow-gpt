@@ -650,7 +650,12 @@ window.openDayModal = function(date) {
             });
     }
     
-    // Load custom trackers
+    // Reset tracker state before loading new date's trackers
+    if (typeof window.resetTrackerState === 'function') {
+        window.resetTrackerState();
+    }
+    
+    // Load custom trackers for this specific date
     if (typeof window.loadCustomTrackers === 'function') {
         window.loadCustomTrackers(date);
     }
@@ -681,6 +686,11 @@ window.closeDayModal = function() {
         modal.style.display = 'none';
         document.body.style.overflow = 'auto';
         console.log('Modal closed');
+        
+        // Reset tracker state when closing modal
+        if (typeof window.resetTrackerState === 'function') {
+            window.resetTrackerState();
+        }
     }
 };
 
