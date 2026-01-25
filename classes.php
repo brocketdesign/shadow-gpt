@@ -593,7 +593,7 @@ class CustomTrackerService {
                 'title' => $title
             ];
         } catch (PDOException $e) {
-            if ($e->getCode() == '23000') {
+            if ($e->getCode() === '23000') {
                 return ['success' => false, 'message' => 'Ce tracker existe déjà'];
             }
             throw $e;

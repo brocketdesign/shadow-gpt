@@ -484,12 +484,13 @@ function renderCustomTrackers(trackers) {
     
     let html = '';
     trackers.forEach(tracker => {
+        const trackerId = parseInt(tracker.tracker_id, 10);
         html += `
             <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-teal-200 hover:border-teal-400 transition-colors">
                 <div class="flex-1">
                     <div class="font-semibold text-teal-700">${escapeHtml(tracker.title)}</div>
                     <div class="text-xs text-teal-600">
-                        Total ce mois: <span id="tracker-total-${tracker.tracker_id}" class="font-bold">${parseFloat(tracker.monthly_total).toFixed(2)}</span>
+                        Total ce mois: <span id="tracker-total-${trackerId}" class="font-bold">${parseFloat(tracker.monthly_total).toFixed(2)}</span>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
@@ -497,11 +498,11 @@ function renderCustomTrackers(trackers) {
                         <input type="number" 
                                step="0.01" 
                                value="${parseFloat(tracker.amount).toFixed(2)}" 
-                               onchange="updateTrackerEntry(${tracker.tracker_id}, this)"
+                               onchange="updateTrackerEntry(${trackerId}, this)"
                                class="w-24 px-2 py-1 text-right border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
                         <span class="ml-1 text-teal-600">€</span>
                     </div>
-                    <button type="button" onclick="deleteTracker(${tracker.tracker_id}, '${escapeHtml(tracker.title)}')" 
+                    <button type="button" onclick="deleteTracker(${trackerId}, '${escapeHtml(tracker.title)}')" 
                             class="text-red-500 hover:text-red-700 p-1" title="Supprimer ce tracker">
                         🗑️
                     </button>
