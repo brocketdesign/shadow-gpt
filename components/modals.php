@@ -217,6 +217,35 @@
                 </div>
             </div>
             
+            <!-- Custom Trackers Section -->
+            <div class="bg-teal-50 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-teal-700 mb-4 flex items-center justify-between">
+                    <span>📊 Mes Trackers Personnalisés</span>
+                    <button type="button" onclick="openAddTrackerForm()" class="text-sm bg-teal-600 text-white px-3 py-1 rounded-lg hover:bg-teal-700">
+                        + Ajouter
+                    </button>
+                </h3>
+                
+                <!-- Add tracker form (hidden by default) -->
+                <div id="addTrackerForm" class="hidden mb-4 p-4 bg-white rounded-lg border border-teal-200">
+                    <div class="flex items-center space-x-3">
+                        <input type="text" id="newTrackerTitle" placeholder="Nom du tracker (ex: Consommation bière)" 
+                               class="flex-1 px-3 py-2 border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                        <button type="button" onclick="createTracker()" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                            Créer
+                        </button>
+                        <button type="button" onclick="closeAddTrackerForm()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Tracker list -->
+                <div id="customTrackersList" class="space-y-3">
+                    <p class="text-teal-600 text-sm italic" id="noTrackersMessage">Aucun tracker personnalisé. Cliquez sur "+ Ajouter" pour en créer un.</p>
+                </div>
+            </div>
+            
             <!-- Score Display -->
             <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 text-center">
                 <h3 class="text-xl font-semibold text-purple-700 mb-2">🎯 Score Total du Jour</h3>
@@ -321,4 +350,175 @@ function updateScores() {
         messageEl.className = "text-sm text-purple-600 mt-2";
     }
 }
+
+// Custom Trackers Functions
+function openAddTrackerForm() {
+    document.getElementById('addTrackerForm').classList.remove('hidden');
+    document.getElementById('newTrackerTitle').focus();
+}
+
+function closeAddTrackerForm() {
+    document.getElementById('addTrackerForm').classList.add('hidden');
+    document.getElementById('newTrackerTitle').value = '';
+}
+
+async function createTracker() {
+    const titleInput = document.getElementById('newTrackerTitle');
+    const title = titleInput.value.trim();
+    
+    if (!title) {
+        alert('Veuillez entrer un titre pour le tracker');
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'create_custom_tracker');
+        formData.append('title', title);
+        
+        const response = await fetch('api/tracking.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeAddTrackerForm();
+            // Reload trackers
+            const currentDate = document.getElementById('dayDate').value;
+            loadCustomTrackers(currentDate);
+        } else {
+            alert(data.message || 'Erreur lors de la création du tracker');
+        }
+    } catch (error) {
+        console.error('Error creating tracker:', error);
+        alert('Erreur de connexion');
+    }
+}
+
+async function deleteTracker(trackerId, trackerTitle) {
+    if (!confirm(`Supprimer le tracker "${trackerTitle}" ? Cette action supprimera toutes les données associées.`)) {
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'delete_custom_tracker');
+        formData.append('tracker_id', trackerId);
+        
+        const response = await fetch('api/tracking.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const currentDate = document.getElementById('dayDate').value;
+            loadCustomTrackers(currentDate);
+        } else {
+            alert('Erreur lors de la suppression du tracker');
+        }
+    } catch (error) {
+        console.error('Error deleting tracker:', error);
+        alert('Erreur de connexion');
+    }
+}
+
+async function updateTrackerEntry(trackerId, inputElement) {
+    const amount = parseFloat(inputElement.value) || 0;
+    const currentDate = document.getElementById('dayDate').value;
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'update_custom_tracker_entry');
+        formData.append('tracker_id', trackerId);
+        formData.append('date', currentDate);
+        formData.append('amount', amount);
+        
+        const response = await fetch('api/tracking.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update monthly total display
+            const totalElement = document.getElementById(`tracker-total-${trackerId}`);
+            if (totalElement) {
+                totalElement.textContent = parseFloat(data.monthly_total).toFixed(2);
+            }
+        }
+    } catch (error) {
+        console.error('Error updating tracker entry:', error);
+    }
+}
+
+async function loadCustomTrackers(date) {
+    try {
+        const response = await fetch(`api/tracking.php?action=get_custom_trackers&date=${date}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderCustomTrackers(data.trackers);
+        }
+    } catch (error) {
+        console.error('Error loading custom trackers:', error);
+    }
+}
+
+function renderCustomTrackers(trackers) {
+    const container = document.getElementById('customTrackersList');
+    const noTrackersMessage = document.getElementById('noTrackersMessage');
+    
+    if (!trackers || trackers.length === 0) {
+        container.innerHTML = '';
+        container.appendChild(noTrackersMessage);
+        noTrackersMessage.classList.remove('hidden');
+        return;
+    }
+    
+    noTrackersMessage.classList.add('hidden');
+    
+    let html = '';
+    trackers.forEach(tracker => {
+        html += `
+            <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-teal-200 hover:border-teal-400 transition-colors">
+                <div class="flex-1">
+                    <div class="font-semibold text-teal-700">${escapeHtml(tracker.title)}</div>
+                    <div class="text-xs text-teal-600">
+                        Total ce mois: <span id="tracker-total-${tracker.tracker_id}" class="font-bold">${parseFloat(tracker.monthly_total).toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="flex items-center">
+                        <input type="number" 
+                               step="0.01" 
+                               value="${parseFloat(tracker.amount).toFixed(2)}" 
+                               onchange="updateTrackerEntry(${tracker.tracker_id}, this)"
+                               class="w-24 px-2 py-1 text-right border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                        <span class="ml-1 text-teal-600">€</span>
+                    </div>
+                    <button type="button" onclick="deleteTracker(${tracker.tracker_id}, '${escapeHtml(tracker.title)}')" 
+                            class="text-red-500 hover:text-red-700 p-1" title="Supprimer ce tracker">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Make loadCustomTrackers available globally
+window.loadCustomTrackers = loadCustomTrackers;
 </script>

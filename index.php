@@ -650,6 +650,11 @@ window.openDayModal = function(date) {
             });
     }
     
+    // Load custom trackers
+    if (typeof window.loadCustomTrackers === 'function') {
+        window.loadCustomTrackers(date);
+    }
+    
     // Verify modal is visible
     setTimeout(() => {
         const computedStyle = window.getComputedStyle(modal);
