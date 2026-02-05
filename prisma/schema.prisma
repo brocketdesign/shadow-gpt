@@ -1,0 +1,142 @@
+// Prisma schema for Shadow GPT
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  sessions      Session[]
+  dailyTracking DailyTracking[]
+  challenges    Challenge[]
+  customTrackers CustomTracker[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DailyTracking {
+  id                    String   @id @default(cuid())
+  userId                String
+  date                  DateTime @db.Date
+  
+  // SAVERS
+  saversSilence         Boolean  @default(false)
+  saversAffirmations    Boolean  @default(false)
+  saversVisualization   Boolean  @default(false)
+  saversExercise        Boolean  @default(false)
+  saversReading         Boolean  @default(false)
+  saversScribing        Boolean  @default(false)
+  
+  // Vices
+  viceFreeCoke          Boolean  @default(false)
+  viceFreeBeer          Boolean  @default(false)
+  viceFreeWeed          Boolean  @default(false)
+  viceFreeSns           Boolean  @default(false)
+  viceFreePorn          Boolean  @default(false)
+  
+  // Additional fields
+  dailyAffirmation      String?  @db.Text
+  notes                 String?  @db.Text
+  moodRating            Int?
+  energyLevel           Int?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model AffirmationCache {
+  id        String   @id @default(cuid())
+  date      DateTime @unique @db.Date
+  content   String   @db.Text
+  source    String   @default("openai") // openai, manual, default
+  createdAt DateTime @default(now())
+}
+
+model Challenge {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  description  String?  @db.Text
+  durationDays Int
+  startDate    DateTime @db.Date
+  endDate      DateTime @db.Date
+  status       String   @default("active") // active, completed, failed, archived
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkIns     ChallengeCheckIn[]
+  
+  @@index([userId])
+  @@index([status])
+}
+
+model ChallengeCheckIn {
+  id          String   @id @default(cuid())
+  challengeId String
+  date        DateTime @db.Date
+  status      String   @default("success") // success, fail, skip
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  
+  @@unique([challengeId, date])
+  @@index([challengeId])
+}
+
+model CustomTracker {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  color     String?  @default("#6366f1")
+  icon      String?  @default("📊")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries   CustomTrackerEntry[]
+  
+  @@unique([userId, title])
+  @@index([userId])
+}
+
+model CustomTrackerEntry {
+  id        String   @id @default(cuid())
+  trackerId String
+  date      DateTime @db.Date
+  amount    Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  tracker   CustomTracker @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+  
+  @@unique([trackerId, date])
+  @@index([trackerId])
+  @@index([date])
+}

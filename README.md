@@ -1,178 +1,239 @@
-# Shadow GPT - Guide Personnel 🌟
+# Shadow GPT - Habit Tracker
 
-## Description
+A modern, full-featured habit tracking application built with Next.js 14, TypeScript, and Tailwind CSS. Track your daily routines with the **SAVERS** methodology, monitor your vices, manage personal challenges, and create custom trackers.
 
-Shadow GPT est ton guide personnel pour cultiver discipline, clarté mentale, force intérieure et santé financière. Cette application web te permet de tracker tes habitudes quotidiennes SAVERS (Miracle Morning) et de rester libre de tes vices (coca, bière, cannabis).
+![Next.js](https://img.shields.io/badge/Next.js-14-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8)
+![Prisma](https://img.shields.io/badge/Prisma-5.10-2D3748)
 
-**Mantra central :** *"Avec discipline, la liberté est une délivrance. Sans discipline, la liberté est un piège."*
+## ✨ Features
 
-## Fonctionnalités
+### 📅 Daily Tracking (SAVERS Methodology)
+- **S**ilence (Meditation)
+- **A**ffirmations
+- **V**isualization
+- **E**xercise
+- **R**eading
+- **S**cribing (Journaling)
 
-### 🎯 Tracking Quotidien
-- **SAVERS** : Silence, Affirmations, Visualisation, Exercise, Reading, Scribing
-- **Vices Free** : Suivi de l'abstinence (coca, bière, cannabis)
-- Calendrier mensuel imprimable en format A4
-- Score quotidien et mensuel
+### 🚫 Vice Tracking
+- Monitor alcohol consumption
+- Track tobacco/cannabis use
+- Record social media & screen time
+- Junk food monitoring
 
-### 💬 Affirmations Intelligentes
-- Génération d'affirmations quotidiennes via OpenAI API
-- Affirmations par défaut si API indisponible
-- Personnalisées selon ton parcours de transformation
+### 🎯 Personal Challenges
+- Create 30/60/90-day challenges
+- AI-powered challenge descriptions
+- Daily check-in system
+- Progress tracking with visual indicators
 
-### 📊 Visualisation
-- Interface moderne avec Tailwind CSS
-- Design optimisé pour l'impression PDF
-- Emojis motivants et couleurs inspirantes
-- Responsive design
+### 📊 Custom Trackers
+- Create unlimited custom trackers
+- Track expenses, habits, or any metric
+- Monthly summaries and statistics
+- Filterable entry lists
 
-### 🗄️ Persistance des Données
-- Base de données MySQL pour sauvegarder tes progrès
-- Historique complet de ton évolution
-- Possibilité d'ajouter des notes personnelles
+### 🔥 Streaks & Motivation
+- Real-time streak tracking
+- Daily AI-generated affirmations
+- Visual calendar with color-coded progress
 
-## Installation
+## 🚀 Quick Start
 
-### Prérequis
-- PHP 7.4 ou supérieur
-- MySQL 5.7 ou supérieur
-- Serveur web (Apache/Nginx) ou utilise le serveur intégré PHP
-- Clé API OpenAI (optionnelle)
+### Prerequisites
 
-### 1. Configuration de la Base de Données
+- Node.js 18+
+- PostgreSQL database (or use Vercel Postgres)
+- OpenAI API key (optional, for AI features)
 
-Crée une base de données MySQL :
-```sql
-CREATE DATABASE shadow_gpt;
+### Local Development
+
+1. **Clone and install dependencies**
+   ```bash
+   git clone <your-repo-url>
+   cd shadow-gpt-react
+   npm install
+   ```
+
+2. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Edit `.env.local` with your values:
+   ```env
+   DATABASE_URL="postgresql://user:password@localhost:5432/shadow_gpt"
+   JWT_SECRET="your-super-secret-jwt-key-at-least-32-characters"
+   OPENAI_API_KEY="sk-your-openai-api-key"
+   ```
+
+3. **Initialize the database**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+
+4. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+## 🌐 Deploying to Vercel
+
+### One-Click Deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=YOUR_REPO_URL)
+
+### Manual Deployment
+
+1. **Push your code to GitHub**
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git branch -M main
+   git remote add origin <your-github-repo-url>
+   git push -u origin main
+   ```
+
+2. **Import to Vercel**
+   - Go to [vercel.com/new](https://vercel.com/new)
+   - Import your GitHub repository
+   - Vercel will auto-detect Next.js settings
+
+3. **Configure Environment Variables**
+   
+   In your Vercel project settings, add these environment variables:
+   
+   | Variable | Description |
+   |----------|-------------|
+   | `DATABASE_URL` | Your PostgreSQL connection string |
+   | `JWT_SECRET` | A secure random string (32+ characters) |
+   | `OPENAI_API_KEY` | Your OpenAI API key (optional) |
+
+4. **Set up Vercel Postgres (Recommended)**
+   - In Vercel Dashboard, go to Storage → Create → Postgres
+   - Connect it to your project
+   - The `DATABASE_URL` will be automatically configured
+
+5. **Initialize Database Schema**
+   
+   After first deployment, run:
+   ```bash
+   npx vercel env pull .env.local
+   npx prisma db push
+   ```
+   
+   Or use the Vercel CLI:
+   ```bash
+   vercel build
+   ```
+
+## 📁 Project Structure
+
+```
+shadow-gpt-react/
+├── app/                    # Next.js App Router
+│   ├── api/               # API Routes
+│   │   ├── affirmations/  # AI affirmations
+│   │   ├── auth/          # Authentication
+│   │   ├── challenges/    # Challenge management
+│   │   ├── streaks/       # Streak calculations
+│   │   ├── trackers/      # Custom trackers
+│   │   └── tracking/      # Daily tracking
+│   ├── challenges/        # Challenges page
+│   ├── trackers/          # Trackers dashboard
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/
+│   ├── providers/         # React context providers
+│   ├── ui/                # Reusable UI components
+│   └── *.tsx              # Feature components
+├── lib/                   # Utilities and services
+│   ├── auth.ts            # Authentication logic
+│   ├── openai.ts          # OpenAI integration
+│   ├── prisma.ts          # Prisma client
+│   ├── types.ts           # TypeScript types
+│   └── utils.ts           # Helper functions
+├── prisma/
+│   └── schema.prisma      # Database schema
+└── public/                # Static assets
 ```
 
-### 2. Configuration du Projet
+## 🔐 Authentication
 
-1. Clone le repository :
+The app uses JWT-based authentication:
+- Tokens are stored in HTTP-only cookies
+- 30-day session duration
+- Automatic token refresh on activity
+
+## 🎨 UI Components
+
+Built with a custom component library using:
+- **Radix UI** - Accessible primitives
+- **Tailwind CSS** - Utility-first styling
+- **Framer Motion** - Smooth animations
+- **Lucide Icons** - Beautiful icons
+
+## 🗃️ Database Schema
+
+### Models
+
+- **User** - Authentication and profile
+- **Session** - JWT session management
+- **DailyTracking** - SAVERS and vices data
+- **Challenge** - Personal challenges
+- **ChallengeCheckIn** - Daily check-ins
+- **CustomTracker** - User-defined trackers
+- **CustomTrackerEntry** - Tracker entries
+- **AffirmationCache** - Cached AI affirmations
+
+## 🛠️ Development Scripts
+
 ```bash
-git clone [TON_REPO_URL]
-cd shadow-gpt
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run start    # Start production server
+npm run lint     # Run ESLint
+npx prisma studio # Open Prisma database viewer
 ```
 
-2. Configure tes paramètres dans `config.php` :
-```php
-// Configuration de la base de données
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'shadow_gpt');
-define('DB_USER', 'ton_nom_utilisateur');
-define('DB_PASS', 'ton_mot_de_passe');
+## 🔧 Configuration
 
-// Clé API OpenAI (optionnelle)
-define('OPENAI_API_KEY', 'ta_cle_api_openai');
+### SAVERS Items
+
+Edit `lib/types.ts` to customize tracking items:
+
+```typescript
+export const SAVERS_CONFIG: SAVERSConfig = {
+  silence: { label: "Silence (Méditation)", icon: "🧘", color: "#8B5CF6" },
+  affirmations: { label: "Affirmations", icon: "💬", color: "#EC4899" },
+  // ... customize as needed
+}
 ```
 
-### 3. Lancement
+### Vices
 
-**Option 1 : Serveur PHP intégré (développement)**
-```bash
-php -S localhost:8000
+```typescript
+export const VICES_CONFIG: VICESConfig = {
+  alcohol: { label: "Alcool", icon: "🍺", color: "#EF4444" },
+  // ... add or remove as needed
+}
 ```
 
-**Option 2 : Apache/Nginx**
-Configure ton serveur web pour pointer vers le dossier du projet.
+## 📄 License
 
-### 4. Accès
-Visite `http://localhost:8000` dans ton navigateur.
+MIT License - feel free to use this project for personal or commercial purposes.
 
-## Utilisation
+## 🤝 Contributing
 
-### 📅 Calendrier Mensuel
-- Coche les cases SAVERS pour chaque activité accomplie
-- Marque tes journées "vices free" 
-- Visualise ton score quotidien (sur 9 points)
-- Imprime en PDF pour affichage physique
-
-### 🖨️ Impression PDF
-- Clique sur le bouton "Imprimer en PDF"
-- Le design s'adapte automatiquement au format A4
-- Parfait pour affichage sur ton frigo ou bureau
-
-### 💡 Alternatives Saines
-L'application suggère des alternatives pour chaque vice :
-- **Coca** → Eau pétillante + citron, kombucha, thé glacé
-- **Bière** → Bière sans alcool, mocktails, activité sportive  
-- **Cannabis** → Méditation, respiration, marche en nature
-
-## Structure du Projet
-
-```
-shadow-gpt/
-├── config.php          # Configuration (BDD, API, constantes)
-├── classes.php          # Classes PHP (Database, OpenAI, Tracking)
-├── index.php            # Page principale avec calendrier
-├── README.md            # Documentation
-└── .gitignore          # Fichiers à ignorer par Git
-```
-
-## Personnalisation
-
-### Changer le Mois Affiché
-Dans `index.php`, modifie ces variables :
-```php
-$currentYear = 2025;
-$currentMonth = 6; // Janvier=1, Février=2, etc.
-$monthName = 'Juin';
-```
-
-### Ajouter des Affirmations Personnelles
-Modifie le tableau `DEFAULT_MANTRAS` dans `config.php` :
-```php
-define('DEFAULT_MANTRAS', [
-    "Ton affirmation personnelle 1",
-    "Ton affirmation personnelle 2",
-    // ...
-]);
-```
-
-### Modifier les SAVERS
-Personnalise le tableau `SAVERS` dans `config.php` selon tes besoins.
-
-## API OpenAI (Optionnelle)
-
-Pour des affirmations générées automatiquement :
-
-1. Crée un compte sur [OpenAI](https://platform.openai.com/)
-2. Génère une clé API
-3. Ajoute-la dans `config.php`
-
-Si tu n'as pas d'API key, l'application utilisera les affirmations par défaut.
-
-## Sécurité
-
-⚠️ **Important** : Ne commite jamais tes vrais identifiants dans Git !
-
-- Garde `config.php` avec des valeurs par défaut dans le repo
-- Configure tes vraies valeurs en local uniquement
-- Utilise `.gitignore` pour protéger tes fichiers sensibles
-
-## Support & Développement
-
-Cette application est ton outil personnel de transformation. Elle grandit avec toi :
-
-### Roadmap Future
-- [ ] Application mobile
-- [ ] Graphiques de progression
-- [ ] Système de récompenses
-- [ ] Intégration calendrier
-- [ ] Mode équipe/accountability partner
-
-### Contribution
-Puisque c'est ton projet personnel, tu peux :
-- Ajouter de nouvelles fonctionnalités selon tes besoins
-- Modifier le design selon tes goûts
-- Intégrer d'autres habitudes à tracker
-
-## Philosophie
-
-Cette application incarne ton mantra :
-> *"Avec discipline, la liberté est une délivrance. Sans discipline, la liberté est un piège."*
-
-Chaque case cochée est une victoire. Chaque jour accompli est un pas vers ta liberté.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-**🌟 Courage, clarté, discipline. Tu as tout en toi pour réussir. 🌟**
+Built with ❤️ using Next.js, TypeScript, and Tailwind CSS
