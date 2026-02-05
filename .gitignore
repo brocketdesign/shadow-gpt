@@ -1,10 +1,39 @@
-# Local configuration with secrets
-config_local.php
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-# Environment files
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
 .env
 .env.local
-.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# vercel
+/.vercel
+
+# typescript
+*.tsbuildinfo
 
 # IDE and editor files
 .idea/
@@ -12,23 +41,3 @@ config_local.php
 *.swp
 *.swo
 *~
-.DS_Store
-
-# Logs
-*.log
-logs/
-
-# Temporary files
-tmp/
-temp/
-cache/
-
-# Composer (if used)
-/vendor/
-composer.lock
-
-# Node modules (if used)
-node_modules/
-
-# Debug files
-debug_*.php
