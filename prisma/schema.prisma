@@ -1,16 +1,16 @@
-// Prisma schema for Shadow GPT
+// Prisma schema for Shadow GPT with MongoDB
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
   email         String    @unique
   password      String
   name          String?
@@ -24,8 +24,8 @@ model User {
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  userId       String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
   token        String   @unique
   expiresAt    DateTime
   createdAt    DateTime @default(now())
@@ -34,9 +34,9 @@ model Session {
 }
 
 model DailyTracking {
-  id                    String   @id @default(cuid())
-  userId                String
-  date                  DateTime @db.Date
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String   @db.ObjectId
+  date                  DateTime
   
   // SAVERS
   saversSilence         Boolean  @default(false)
@@ -49,13 +49,13 @@ model DailyTracking {
   // Vices
   viceFreeCoke          Boolean  @default(false)
   viceFreeBeer          Boolean  @default(false)
-  viceFreeWeed          Boolean  @default(false)
-  viceFreeSns           Boolean  @default(false)
   viceFreePorn          Boolean  @default(false)
+  viceFreeSns           Boolean  @default(false)
+  viceFreeWeed          Boolean  @default(false)
   
   // Additional fields
-  dailyAffirmation      String?  @db.Text
-  notes                 String?  @db.Text
+  dailyAffirmation      String?
+  notes                 String?
   moodRating            Int?
   energyLevel           Int?
   
@@ -70,21 +70,21 @@ model DailyTracking {
 }
 
 model AffirmationCache {
-  id        String   @id @default(cuid())
-  date      DateTime @unique @db.Date
-  content   String   @db.Text
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  date      DateTime @unique
+  content   String
   source    String   @default("openai") // openai, manual, default
   createdAt DateTime @default(now())
 }
 
 model Challenge {
-  id           String   @id @default(cuid())
-  userId       String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
   title        String
-  description  String?  @db.Text
+  description  String?
   durationDays Int
-  startDate    DateTime @db.Date
-  endDate      DateTime @db.Date
+  startDate    DateTime
+  endDate      DateTime
   status       String   @default("active") // active, completed, failed, archived
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -97,11 +97,11 @@ model Challenge {
 }
 
 model ChallengeCheckIn {
-  id          String   @id @default(cuid())
-  challengeId String
-  date        DateTime @db.Date
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  challengeId String   @db.ObjectId
+  date        DateTime
   status      String   @default("success") // success, fail, skip
-  notes       String?  @db.Text
+  notes       String?
   createdAt   DateTime @default(now())
   
   challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
@@ -111,8 +111,8 @@ model ChallengeCheckIn {
 }
 
 model CustomTracker {
-  id        String   @id @default(cuid())
-  userId    String
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
   title     String
   color     String?  @default("#6366f1")
   icon      String?  @default("📊")
@@ -127,9 +127,9 @@ model CustomTracker {
 }
 
 model CustomTrackerEntry {
-  id        String   @id @default(cuid())
-  trackerId String
-  date      DateTime @db.Date
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  trackerId String   @db.ObjectId
+  date      DateTime
   amount    Float    @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
