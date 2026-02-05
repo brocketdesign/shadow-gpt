@@ -1,6 +1,10 @@
 {
-  "/not-found": "app/not-found.js",
+  "/api/streaks/route": "app/api/streaks/route.js",
   "/page": "app/page.js",
-  "/api/auth/route": "app/api/auth/route.js",
-  "/api/affirmations/route": "app/api/affirmations/route.js"
+  "/api/affirmations/route": "app/api/affirmations/route.js",
+  "/api/tracking/route": "app/api/tracking/route.js",
+  "/trackers/page": "app/trackers/page.js",
+  "/api/trackers/route": "app/api/trackers/route.js",
+  "/challenges/page": "app/challenges/page.js",
+  "/api/challenges/route": "app/api/challenges/route.js"
 }
