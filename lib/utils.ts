@@ -42,7 +42,7 @@ export function calculateScore(dayData: {
   viceFreePorn?: boolean
 } | null): { savers: number; vices: number; total: number } {
   if (!dayData) return { savers: 0, vices: 0, total: 0 }
-  
+
   const savers = [
     dayData.saversSilence,
     dayData.saversAffirmations,
@@ -51,7 +51,7 @@ export function calculateScore(dayData: {
     dayData.saversReading,
     dayData.saversScribing,
   ].filter(Boolean).length
-  
+
   const vices = [
     dayData.viceFreeCoke,
     dayData.viceFreeBeer,
@@ -59,7 +59,7 @@ export function calculateScore(dayData: {
     dayData.viceFreeSns,
     dayData.viceFreePorn,
   ].filter(Boolean).length
-  
+
   return { savers, vices, total: savers + vices }
 }
 
@@ -81,20 +81,20 @@ export function calculateStreak(
   endDate: Date = new Date()
 ): { current: number; best: number } {
   if (!data.length) return { current: 0, best: 0 }
-  
+
   // Sort by date descending
-  const sorted = [...data].sort((a, b) => 
+  const sorted = [...data].sort((a, b) =>
     new Date(b.date).getTime() - new Date(a.date).getTime()
   )
-  
+
   let current = 0
   let best = 0
   let streak = 0
   let lastDate: Date | null = null
-  
+
   for (const item of sorted) {
     const itemDate = parseISO(item.date)
-    
+
     if (item.value) {
       if (!lastDate || differenceInDays(lastDate, itemDate) === 1) {
         streak++
@@ -103,7 +103,7 @@ export function calculateStreak(
         streak = 1
       }
       lastDate = itemDate
-      
+
       // Check if streak is current (includes today or yesterday)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
@@ -116,7 +116,7 @@ export function calculateStreak(
       lastDate = null
     }
   }
-  
+
   return { current, best: Math.max(best, streak) }
 }
 
@@ -141,4 +141,8 @@ export function generateRandomColor(): string {
     "#0ea5e9", "#3b82f6", "#6366f1"
   ]
   return colors[Math.floor(Math.random() * colors.length)]
+}
+
+export function absoluteUrl(path: string) {
+  return `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${path}`
 }

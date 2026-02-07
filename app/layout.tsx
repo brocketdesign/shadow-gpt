@@ -4,6 +4,8 @@ import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { ClerkProvider } from "@clerk/nextjs"
 import { AuthProvider } from "@/components/providers/auth-provider"
+import { ProModal } from "@/components/pro-modal"
+import { PromoToast } from "@/components/promo-toast"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,6 +31,8 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className={`${inter.className} min-h-screen bg-gray-50`}>
           <AuthProvider>
+            <ProModal />
+            <PromoToast />
             {children}
           </AuthProvider>
           <Toaster />

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useSignUp, useSignIn } from "@clerk/nextjs"
+import { useSignUp, useSignIn, SignInButton, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
@@ -34,6 +34,7 @@ export function OnboardingWizard() {
   const { toast } = useToast()
   const { isLoaded: signUpLoaded, signUp, setActive: setSignUpActive } = useSignUp()
   const { isLoaded: signInLoaded, signIn, setActive: setSignInActive } = useSignIn()
+  const { isSignedIn } = useUser()
 
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -71,12 +72,12 @@ export function OnboardingWizard() {
 
   const pactText = name && painPoints.length && vision.length
     ? `I, ${name}, commit to attacking ${painPoints.map(pp => {
-        const found = PAIN_POINTS.find(p => p.value === pp)
-        return found ? found.label.toLowerCase() : pp
-      }).join(', ')} to achieve ${vision.map(v => {
-        const found = VISION_OPTIONS.find(o => o.value === v)
-        return found ? found.label.toLowerCase() : v
-      }).join(', ')}.`
+      const found = PAIN_POINTS.find(p => p.value === pp)
+      return found ? found.label.toLowerCase() : pp
+    }).join(', ')} to achieve ${vision.map(v => {
+      const found = VISION_OPTIONS.find(o => o.value === v)
+      return found ? found.label.toLowerCase() : v
+    }).join(', ')}.`
     : ""
 
   const canProceed = useCallback(() => {
@@ -86,11 +87,11 @@ export function OnboardingWizard() {
       case 2: return painPoints.length > 0
       case 3: return vision.length > 0
       case 4: return true // hold-to-sign handles this
-      case 5: return email.trim().length > 0 && password.trim().length >= 8
+      case 5: return isSignedIn || (email.trim().length > 0 && password.trim().length >= 8)
       case 6: return true
       default: return false
     }
-  }, [step, name, age, disciplineLevel, painPoints, vision, email, password])
+  }, [step, name, age, disciplineLevel, painPoints, vision, email, password, isSignedIn])
 
   const togglePainPoint = (value: string) => {
     setPainPoints(prev =>
@@ -113,6 +114,14 @@ export function OnboardingWizard() {
    * save the onboarding data to the database.
    */
   const handleCreateAccount = useCallback(async () => {
+    // If user is already signed in, just save the data
+    if (isSignedIn) {
+      setLoading(true)
+      await saveOnboardingData()
+      setLoading(false)
+      return
+    }
+
     if (!signUpLoaded || !signUp) return
 
     setLoading(true)
@@ -333,6 +342,17 @@ export function OnboardingWizard() {
                   Start Initialization
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
+
+                {!isSignedIn && (
+                  <p className="text-gray-500 text-sm pt-4">
+                    Already have an account?{" "}
+                    <SignInButton mode="modal">
+                      <button className="text-indigo-600 font-medium hover:underline hover:text-indigo-700 transition-colors">
+                        Sign in
+                      </button>
+                    </SignInButton>
+                  </p>
+                )}
               </motion.div>
             )}
 
@@ -648,7 +668,7 @@ export function OnboardingWizard() {
                     {pendingVerification ? "Verify Your Email" : "Create Your Account"}
                   </h2>
                   <p className="text-gray-600 mt-1">
-                    {pendingVerification 
+                    {pendingVerification
                       ? `We sent a verification code to ${email}`
                       : "Your protocol is ready. Create an account to activate it."
                     }
@@ -725,6 +745,31 @@ export function OnboardingWizard() {
                     <p className="text-xs text-center text-gray-400">
                       By creating an account, you agree to our terms of service and privacy policy.
                     </p>
+                  </div>
+                ) : isSignedIn ? (
+                  <div className="space-y-4">
+                    <p className="text-center text-lg text-gray-700">
+                      You are already signed in. Click below to activate your protocol.
+                    </p>
+                    <Button
+                      variant="gradient"
+                      size="lg"
+                      onClick={handleCreateAccount}
+                      disabled={loading}
+                      className="w-full text-lg py-6"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                          Activating...
+                        </>
+                      ) : (
+                        <>
+                          Activate Protocol
+                          <ArrowRight className="ml-2 w-5 h-5" />
+                        </>
+                      )}
+                    </Button>
                   </div>
                 ) : (
                   /* Email verification form */

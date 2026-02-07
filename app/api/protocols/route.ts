@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { formatDateISO } from '@/lib/utils'
+import { checkTrackerLimit } from '@/lib/subscription'
 
 export async function GET(request: NextRequest) {
   try {
@@ -99,6 +100,16 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             { success: false, message: 'Title required' },
             { status: 400 }
+          )
+        }
+
+
+
+        const canCreate = await checkTrackerLimit()
+        if (!canCreate) {
+          return NextResponse.json(
+            { success: false, message: 'Free plan limit reached (max 3 protocols). Upgrade to add more.' },
+            { status: 403 }
           )
         }
 

@@ -4,12 +4,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useUser, useClerk } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
-import { 
-  Calendar, 
-  Target, 
-  Wallet, 
-  LogOut, 
-  User, 
+import {
+  Calendar,
+  Target,
+  Wallet,
+  LogOut,
+  User,
   Menu,
   X,
   Sparkles
@@ -59,8 +59,8 @@ export function Navigation() {
                   href={link.href}
                   className={cn(
                     "flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200",
-                    isActive 
-                      ? "bg-indigo-100 text-indigo-700" 
+                    isActive
+                      ? "bg-indigo-100 text-indigo-700"
                       : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   )}
                 >
@@ -81,8 +81,13 @@ export function Navigation() {
                   </div>
                   <span className="font-medium">{user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0] || "User"}</span>
                 </div>
-                <Button 
-                  variant="ghost" 
+                <Link href="/settings/billing">
+                  <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+                    Billing
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost"
                   size="icon"
                   onClick={handleLogout}
                   className="text-gray-500 hover:text-gray-700"
@@ -99,8 +104,8 @@ export function Navigation() {
             )}
 
             {/* Mobile menu button */}
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               className="md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -125,8 +130,8 @@ export function Navigation() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-                    isActive 
-                      ? "bg-indigo-100 text-indigo-700" 
+                    isActive
+                      ? "bg-indigo-100 text-indigo-700"
                       : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   )}
                 >

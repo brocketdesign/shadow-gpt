@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { ChevronLeft, ChevronRight, Sparkles, Target, Shield, Zap, Plus, Trash2, CheckSquare, Loader2 } from "lucide-react"
 import { getMonthName } from "@/lib/utils"
 import type { DailyTracking } from "@/lib/types"
+import { useProModal } from "@/hooks/use-pro-modal"
 
 interface CustomProtocol {
   id: string
@@ -24,6 +25,7 @@ interface CustomProtocol {
 }
 
 export default function Home() {
+  const proModal = useProModal();
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
@@ -46,7 +48,7 @@ export default function Home() {
       setLoading(false)
       return
     }
-    
+
     setLoading(true)
     try {
       const res = await fetch(`/api/tracking?action=get_month_data&year=${currentYear}&month=${currentMonth}`)
@@ -107,7 +109,11 @@ export default function Home() {
         setProtocolForm({ title: "", icon: "✅" })
         loadProtocols()
       } else {
-        throw new Error(data.message)
+        if (res.status === 403) {
+          proModal.onOpen();
+        } else {
+          throw new Error(data.message)
+        }
       }
     } catch (error) {
       toast({ title: "Error", description: "Unable to create protocol", variant: "destructive" })
@@ -182,24 +188,32 @@ export default function Home() {
     setSelectedDate(date)
   }
 
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navigation />
-      
+
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="gradient-bg text-white p-8 rounded-3xl mb-8 relative overflow-hidden">
           {/* Background decoration */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-          
+
           <div className="relative">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Sparkles className="w-8 h-8" />
               <h1 className="text-3xl sm:text-4xl font-bold text-center">Zenith AI</h1>
               <Sparkles className="w-8 h-8" />
             </div>
-            
+
             {/* Month Navigation */}
             <div className="flex items-center justify-center gap-4 mb-6">
               <Button
@@ -222,14 +236,14 @@ export default function Home() {
                 <ChevronRight className="w-6 h-6" />
               </Button>
             </div>
-            
+
             {/* Daily Affirmation */}
             {affirmation && (
               <p className="text-lg text-center opacity-90 max-w-2xl mx-auto italic">
                 "{affirmation}"
               </p>
             )}
-            
+
             {/* Streaks */}
             {user && (
               <div className="mt-8">
@@ -239,7 +253,7 @@ export default function Home() {
                 <StreakDisplay year={currentYear} month={currentMonth} />
               </div>
             )}
-            
+
 
           </div>
         </div>
@@ -331,7 +345,7 @@ export default function Home() {
                   Add Protocol
                 </Button>
               </div>
-              
+
               {protocols.length === 0 ? (
                 <p className="text-gray-500 text-center py-4 text-sm">
                   No custom protocols yet. Add your first one to track additional habits!
@@ -359,10 +373,51 @@ export default function Home() {
                   ))}
                 </div>
               )}
-              
+
+
               <p className="text-xs text-gray-400 mt-3">
                 These protocols appear as checkboxes in your daily form and count towards your Daily Score ({6 + 5 + protocols.length} max).
               </p>
+
+              {/* Free tier limitation notice */}
+              <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-purple-200">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="text-sm font-semibold text-gray-900">
+                        Custom Trackers: {protocols.length}/3
+                      </div>
+                      {protocols.length >= 3 && (
+                        <span className="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-700 rounded-full">
+                          LIMIT REACHED
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      Free plan users are limited to <strong>3 custom trackers</strong>. Upgrade to Ascended to unlock unlimited trackers and premium features.
+                    </p>
+                  </div>
+                  <Button
+                    variant="gradient"
+                    size="sm"
+                    onClick={() => proModal.onOpen()}
+                    className="flex-shrink-0"
+                  >
+                    <Zap className="w-3.5 h-3.5 mr-1 fill-white" />
+                    Upgrade
+                  </Button>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-3">
+                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300"
+                      style={{ width: `${Math.min((protocols.length / 3) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -382,7 +437,7 @@ export default function Home() {
               </div>
             )}
           </div>
-          
+
           <Calendar
             year={currentYear}
             month={currentMonth}
