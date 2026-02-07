@@ -5,10 +5,15 @@ const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null
 
-interface GeneratedTracker {
+interface GeneratedFinanceTracker {
   title: string
   icon: string
   color: string
+}
+
+interface GeneratedProtocol {
+  title: string
+  icon: string
 }
 
 interface GeneratedChallenge {
@@ -18,19 +23,48 @@ interface GeneratedChallenge {
 
 interface OnboardingContent {
   affirmations: string[]
-  trackers: GeneratedTracker[]
+  financeTrackers: GeneratedFinanceTracker[]
+  protocols: GeneratedProtocol[]
   challenge: GeneratedChallenge | null
 }
 
-// Maps pain points to tracker suggestions
-const PAIN_POINT_TRACKERS: Record<string, GeneratedTracker> = {
-  procrastination: { title: 'Deep Work Session', icon: '🎯', color: '#6366f1' },
-  digital_distractions: { title: 'Screen-Free Hour', icon: '📵', color: '#f59e0b' },
-  poor_sleep: { title: 'In Bed Before 11PM', icon: '🌙', color: '#8b5cf6' },
-  bad_nutrition: { title: 'Healthy Meal', icon: '🥗', color: '#22c55e' },
-  no_exercise: { title: 'Workout Done', icon: '💪', color: '#ef4444' },
-  no_clear_goals: { title: 'Daily Goal Review', icon: '📋', color: '#0ea5e9' },
+// Maps pain points → custom protocols (boolean daily habits for the Dashboard score)
+const PAIN_POINT_PROTOCOLS: Record<string, GeneratedProtocol> = {
+  procrastination: { title: 'Deep Work Session', icon: '🎯' },
+  digital_distractions: { title: 'Screen-Free Hour', icon: '📵' },
+  poor_sleep: { title: 'In Bed Before 11PM', icon: '🌙' },
+  bad_nutrition: { title: 'Healthy Meal', icon: '🥗' },
+  no_exercise: { title: 'Workout Done', icon: '💪' },
+  no_clear_goals: { title: 'Daily Goal Review', icon: '📋' },
 }
+
+// Maps vision → custom protocols (bonus habits tied to aspirations)
+const VISION_PROTOCOLS: Record<string, GeneratedProtocol> = {
+  athletic_physique: { title: '10K Steps', icon: '🏃' },
+  business_launched: { title: '1h Business Work', icon: '🚀' },
+  steel_mindset: { title: 'Cold Shower', icon: '🧊' },
+  financial_freedom: { title: 'No Impulse Spending', icon: '🛑' },
+}
+
+// Maps pain points → finance trackers (money-based entries for the Finances tab)
+const PAIN_POINT_FINANCE_TRACKERS: Record<string, GeneratedFinanceTracker> = {
+  bad_nutrition: { title: 'Groceries', icon: '🛒', color: '#22c55e' },
+  digital_distractions: { title: 'Subscriptions', icon: '📺', color: '#f59e0b' },
+  no_exercise: { title: 'Gym / Fitness', icon: '🏋️', color: '#ef4444' },
+}
+
+// Maps vision → finance trackers
+const VISION_FINANCE_TRACKERS: Record<string, GeneratedFinanceTracker> = {
+  financial_freedom: { title: 'Savings', icon: '🏦', color: '#0ea5e9' },
+  business_launched: { title: 'Business Expenses', icon: '💼', color: '#8b5cf6' },
+  athletic_physique: { title: 'Supplements / Health', icon: '💊', color: '#22c55e' },
+}
+
+// Default finance trackers everyone gets
+const DEFAULT_FINANCE_TRACKERS: GeneratedFinanceTracker[] = [
+  { title: 'Food & Dining', icon: '🍽️', color: '#f97316' },
+  { title: 'Transport', icon: '🚗', color: '#6366f1' },
+]
 
 // Maps pain points to challenge suggestions
 const PAIN_POINT_CHALLENGES: Record<string, GeneratedChallenge> = {
@@ -76,20 +110,48 @@ export async function generateOnboardingContent(
   vision: string[],
   visionCustom: string | undefined,
 ): Promise<OnboardingContent> {
-  // Generate trackers based on pain points
-  const trackers: GeneratedTracker[] = painPoints
-    .map(pp => PAIN_POINT_TRACKERS[pp])
-    .filter((t): t is GeneratedTracker => !!t)
-    .slice(0, 3)
+  // --- Custom Protocols (boolean habits for Dashboard score) ---
+  const protocolSet = new Map<string, GeneratedProtocol>()
 
-  // Pick a challenge based on the first pain point
+  // From pain points
+  for (const pp of painPoints) {
+    const proto = PAIN_POINT_PROTOCOLS[pp]
+    if (proto) protocolSet.set(proto.title, proto)
+  }
+  // From vision
+  for (const v of vision) {
+    const proto = VISION_PROTOCOLS[v]
+    if (proto) protocolSet.set(proto.title, proto)
+  }
+  const protocols = Array.from(protocolSet.values()).slice(0, 5)
+
+  // --- Finance Trackers (money-based for Finances tab) ---
+  const financeSet = new Map<string, GeneratedFinanceTracker>()
+
+  // Always include defaults
+  for (const t of DEFAULT_FINANCE_TRACKERS) {
+    financeSet.set(t.title, t)
+  }
+  // From pain points
+  for (const pp of painPoints) {
+    const t = PAIN_POINT_FINANCE_TRACKERS[pp]
+    if (t) financeSet.set(t.title, t)
+  }
+  // From vision
+  for (const v of vision) {
+    const t = VISION_FINANCE_TRACKERS[v]
+    if (t) financeSet.set(t.title, t)
+  }
+  const financeTrackers = Array.from(financeSet.values()).slice(0, 6)
+
+  // --- Challenge ---
   const primaryPainPoint = painPoints.length > 0 ? painPoints[0] : 'procrastination'
   const challenge = PAIN_POINT_CHALLENGES[primaryPainPoint] || PAIN_POINT_CHALLENGES['procrastination']
 
-  // Generate affirmations
+  // --- Affirmations ---
   const affirmations = await generateAffirmations(painPoints, painPointsOther, vision, visionCustom)
 
-  return { affirmations, trackers, challenge }
+  return { affirmations, financeTrackers, protocols, challenge }
 }
 
 async function generateAffirmations(

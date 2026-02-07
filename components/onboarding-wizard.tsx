@@ -62,7 +62,8 @@ export function OnboardingWizard() {
   // Generated content
   const [generatedContent, setGeneratedContent] = useState<{
     affirmations: string[]
-    trackers: { title: string; icon: string; color: string }[]
+    financeTrackers: { title: string; icon: string; color: string }[]
+    protocols: { title: string; icon: string }[]
     challenge: { title: string; description: string } | null
   } | null>(null)
 
@@ -811,14 +812,39 @@ export function OnboardingWizard() {
                       </div>
                     </div>
 
-                    {/* Trackers */}
-                    {generatedContent.trackers.length > 0 && (
+                    {/* Custom Protocols (Daily Habits) */}
+                    {generatedContent.protocols.length > 0 && (
                       <div className="bg-white rounded-xl p-4 border border-gray-200">
                         <h3 className="font-semibold text-sm text-gray-500 uppercase mb-3">
-                          📊 Your Trackers
+                          ✅ Your Daily Protocols
                         </h3>
+                        <p className="text-xs text-gray-400 mb-3">
+                          These count towards your Daily Score on the Dashboard.
+                        </p>
                         <div className="space-y-2">
-                          {generatedContent.trackers.map((tracker, i) => (
+                          {generatedContent.protocols.map((protocol, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                              <span className="w-8 h-8 rounded-lg flex items-center justify-center text-lg bg-purple-50">
+                                {protocol.icon}
+                              </span>
+                              <span className="text-sm font-medium text-gray-800">{protocol.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Finance Trackers */}
+                    {generatedContent.financeTrackers.length > 0 && (
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <h3 className="font-semibold text-sm text-gray-500 uppercase mb-3">
+                          💰 Your Finance Trackers
+                        </h3>
+                        <p className="text-xs text-gray-400 mb-3">
+                          Track spending categories in the Finances tab.
+                        </p>
+                        <div className="space-y-2">
+                          {generatedContent.financeTrackers.map((tracker, i) => (
                             <div key={i} className="flex items-center gap-3">
                               <span
                                 className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"

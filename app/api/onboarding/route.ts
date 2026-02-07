@@ -92,9 +92,9 @@ export async function POST(request: NextRequest) {
     // Generate personalized content
     const content = await generateOnboardingContent(painPoints, painPointsOther, vision, visionCustom)
 
-    // Create suggested trackers
-    if (content.trackers?.length) {
-      for (const tracker of content.trackers) {
+    // Create finance trackers (CustomTracker — money-based, for Finances tab)
+    if (content.financeTrackers?.length) {
+      for (const tracker of content.financeTrackers) {
         try {
           await prisma.customTracker.create({
             data: {
@@ -106,6 +106,23 @@ export async function POST(request: NextRequest) {
           })
         } catch {
           // Ignore duplicate tracker errors
+        }
+      }
+    }
+
+    // Create custom protocols (CustomProtocol — boolean daily habits, for Dashboard score)
+    if (content.protocols?.length) {
+      for (const protocol of content.protocols) {
+        try {
+          await prisma.customProtocol.create({
+            data: {
+              userId: updatedUser.id,
+              title: protocol.title,
+              icon: protocol.icon,
+            },
+          })
+        } catch {
+          // Ignore duplicate protocol errors
         }
       }
     }
@@ -134,7 +151,8 @@ export async function POST(request: NextRequest) {
       user: updatedUser,
       generatedContent: {
         affirmations: content.affirmations,
-        trackers: content.trackers,
+        financeTrackers: content.financeTrackers,
+        protocols: content.protocols,
         challenge: content.challenge,
       },
     })
