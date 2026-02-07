@@ -420,10 +420,7 @@ export default function Home() {
             </DialogTitle>
           </DialogHeader>
           <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleCreateProtocol()
-            }}
+            onSubmit={handleCreateProtocol}
             className="space-y-4"
           >
             <div className="space-y-2">
