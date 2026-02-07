@@ -4,9 +4,52 @@ export interface User {
   id: string
   email: string
   name: string | null
+  age: number | null
+  disciplineLevel: string | null
+  painPoints: string[]
+  painPointsOther: string | null
+  vision: string[]
+  visionCustom: string | null
+  pactText: string | null
+  onboardingCompleted: boolean
   createdAt: Date
   updatedAt: Date
 }
+
+// Onboarding types
+export interface OnboardingData {
+  name: string
+  age: number
+  disciplineLevel: 'chaos' | 'inconsistent' | 'soldier' | 'master'
+  painPoints: string[]
+  painPointsOther?: string
+  vision: string[]
+  visionCustom?: string
+  pactText: string
+}
+
+export const DISCIPLINE_LEVELS = [
+  { value: 'chaos', label: 'Total Chaos', icon: '🌪️' },
+  { value: 'inconsistent', label: 'Up and Down', icon: '📈' },
+  { value: 'soldier', label: 'Soldier', icon: '🎖️' },
+  { value: 'master', label: 'Master', icon: '👑' },
+] as const
+
+export const PAIN_POINTS = [
+  { value: 'procrastination', label: 'Procrastination', icon: '⏰' },
+  { value: 'digital_distractions', label: 'Digital Distractions', icon: '📱' },
+  { value: 'poor_sleep', label: 'Poor Sleep', icon: '😴' },
+  { value: 'bad_nutrition', label: 'Bad Nutrition', icon: '🍔' },
+  { value: 'no_exercise', label: 'No Exercise', icon: '🏋️' },
+  { value: 'no_clear_goals', label: 'No Clear Goals', icon: '🎯' },
+] as const
+
+export const VISION_OPTIONS = [
+  { value: 'athletic_physique', label: 'Athletic Physique', icon: '💪' },
+  { value: 'business_launched', label: 'Business Launched', icon: '🚀' },
+  { value: 'steel_mindset', label: 'Steel Mindset', icon: '🧠' },
+  { value: 'financial_freedom', label: 'Financial Freedom', icon: '💰' },
+] as const
 
 export interface Session {
   id: string

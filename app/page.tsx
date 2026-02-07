@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/providers/auth-provider"
 import { Navigation } from "@/components/navigation"
 import { Calendar } from "@/components/calendar"
@@ -15,6 +16,7 @@ import type { DailyTracking } from "@/lib/types"
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1)
   const [monthData, setMonthData] = useState<Record<string, DailyTracking>>({})
@@ -66,6 +68,13 @@ export default function Home() {
       loadMonthData()
     }
   }, [authLoading, loadMonthData])
+
+  // Redirect to onboarding if user hasn't completed it
+  useEffect(() => {
+    if (!authLoading && user && !user.onboardingCompleted) {
+      router.push("/onboarding")
+    }
+  }, [authLoading, user, router])
 
   const goToPreviousMonth = () => {
     if (currentMonth === 1) {

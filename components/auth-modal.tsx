@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +23,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [name, setName] = useState("")
   const { login, register } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -63,6 +65,9 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             variant: "success",
           })
           onOpenChange(false)
+          if (result.needsOnboarding) {
+            router.push("/onboarding")
+          }
         } else {
           toast({
             title: "Erreur d'inscription",

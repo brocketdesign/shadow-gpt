@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>
-  register: (email: string, password: string, name: string) => Promise<{ success: boolean; message?: string }>
+  register: (email: string, password: string, name: string) => Promise<{ success: boolean; message?: string; needsOnboarding?: boolean }>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (data.success && data.user) {
         setUser(data.user)
-        return { success: true }
+        return { success: true, needsOnboarding: !data.user.onboardingCompleted }
       }
       
       return { success: false, message: data.message || "Erreur d'inscription" }
