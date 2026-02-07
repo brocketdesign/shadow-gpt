@@ -1,4 +1,4 @@
-// Prisma schema for Shadow GPT with MongoDB
+// Prisma schema for Zenith AI with MongoDB
 
 generator client {
   provider = "prisma-client-js"
@@ -11,9 +11,18 @@ datasource db {
 
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  clerkId       String    @unique
   email         String    @unique
-  password      String
+  password      String?   // Legacy field, no longer used with Clerk
   name          String?
+  age           Int?
+  disciplineLevel String? // "chaos" | "inconsistent" | "soldier" | "master"
+  painPoints    String[]  // e.g. ["procrastination", "digital_distractions", ...]
+  painPointsOther String?
+  vision        String[]  // e.g. ["athletic_physique", "business_launched", ...]
+  visionCustom  String?
+  pactText      String?
+  onboardingCompleted Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   

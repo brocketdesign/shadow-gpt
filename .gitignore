@@ -43,4 +43,6 @@ yarn-error.log*
 *~
 
 # Previous PHP version
-shadowGPT-PHP/
+zenith-ai-php/
+# clerk configuration (can include secrets)
+/.clerk/
