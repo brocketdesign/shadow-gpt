@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
@@ -12,7 +12,11 @@ export const metadata: Metadata = {
   description: "Your personal guide for transformation - Track your SAVERS, control your vices, reach your goals",
   keywords: ["habit tracker", "SAVERS", "miracle morning", "personal development", "addiction recovery"],
   authors: [{ name: "Zenith AI" }],
-  viewport: "width=device-width, initial-scale=1",
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 }
 
 export default function RootLayout({
