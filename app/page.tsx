@@ -7,7 +7,6 @@ import { Navigation } from "@/components/navigation"
 import { Calendar } from "@/components/calendar"
 import { DayFormModal } from "@/components/day-form-modal"
 import { StreakDisplay } from "@/components/streak-display"
-import { AuthModal } from "@/components/auth-modal"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronLeft, ChevronRight, Sparkles, Target, Shield, Zap } from "lucide-react"
@@ -22,7 +21,6 @@ export default function Home() {
   const [monthData, setMonthData] = useState<Record<string, DailyTracking>>({})
   const [affirmation, setAffirmation] = useState("")
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [showAuthModal, setShowAuthModal] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const loadMonthData = useCallback(async () => {
@@ -69,9 +67,9 @@ export default function Home() {
     }
   }, [authLoading, loadMonthData])
 
-  // Redirect to onboarding if user hasn't completed it
+  // Redirect to onboarding if user is not logged in
   useEffect(() => {
-    if (!authLoading && user && !user.onboardingCompleted) {
+    if (!authLoading && !user) {
       router.push("/onboarding")
     }
   }, [authLoading, user, router])
@@ -96,7 +94,6 @@ export default function Home() {
 
   const handleDayClick = (date: string) => {
     if (!user) {
-      setShowAuthModal(true)
       return
     }
     setSelectedDate(date)
@@ -116,7 +113,7 @@ export default function Home() {
           <div className="relative">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Sparkles className="w-8 h-8" />
-              <h1 className="text-3xl sm:text-4xl font-bold text-center">Shadow GPT</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-center">Zenith AI</h1>
               <Sparkles className="w-8 h-8" />
             </div>
             
@@ -160,18 +157,7 @@ export default function Home() {
               </div>
             )}
             
-            {/* Login prompt for non-authenticated users */}
-            {!user && !authLoading && (
-              <div className="mt-8 bg-white/20 rounded-2xl p-6 max-w-md mx-auto text-center backdrop-blur-sm">
-                <p className="mb-4">Connecte-toi pour tracker tes progrès et débloquer toutes les fonctionnalités</p>
-                <Button 
-                  onClick={() => setShowAuthModal(true)}
-                  className="bg-white text-indigo-600 hover:bg-gray-100 font-semibold"
-                >
-                  Se connecter
-                </Button>
-              </div>
-            )}
+
           </div>
         </div>
 
@@ -271,7 +257,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="text-center text-gray-500 text-sm py-8">
-          <p>Shadow GPT - Ton guide personnel pour la transformation 🌟</p>
+          <p>Zenith AI - Ton guide personnel pour la transformation 🌟</p>
           <p className="mt-1">Construis ta meilleure version, jour après jour</p>
         </footer>
       </main>
@@ -286,11 +272,6 @@ export default function Home() {
         />
       )}
 
-      {/* Auth Modal */}
-      <AuthModal 
-        open={showAuthModal} 
-        onOpenChange={setShowAuthModal} 
-      />
     </div>
   )
 }

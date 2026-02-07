@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useUser, useClerk } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { 
   Calendar, 
@@ -24,13 +24,14 @@ const navLinks = [
 ]
 
 export function Navigation() {
-  const { user, logout } = useAuth()
+  const { user } = useUser()
+  const { signOut } = useClerk()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
-    await logout()
-    window.location.href = "/"
+    await signOut()
+    window.location.href = "/onboarding"
   }
 
   return (
@@ -43,7 +44,7 @@ export function Navigation() {
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <span className="font-bold text-xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hidden sm:inline">
-              Shadow GPT
+              Zenith AI
             </span>
           </Link>
 
@@ -78,7 +79,7 @@ export function Navigation() {
                   <div className="w-8 h-8 rounded-full gradient-bg flex items-center justify-center">
                     <User className="w-4 h-4 text-white" />
                   </div>
-                  <span className="font-medium">{user.name || user.email.split("@")[0]}</span>
+                  <span className="font-medium">{user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0] || "User"}</span>
                 </div>
                 <Button 
                   variant="ghost" 
@@ -90,7 +91,7 @@ export function Navigation() {
                 </Button>
               </>
             ) : (
-              <Link href="/login">
+              <Link href="/onboarding">
                 <Button variant="gradient" size="sm">
                   Se connecter
                 </Button>

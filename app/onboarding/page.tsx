@@ -2,24 +2,31 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useUser } from "@clerk/nextjs"
 import { OnboardingWizard } from "@/components/onboarding-wizard"
 import { Loader2 } from "lucide-react"
 
 export default function OnboardingPage() {
-  const { user, loading } = useAuth()
+  const { user: clerkUser, isLoaded } = useUser()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/")
+    // If user is already logged in, check if onboarding is completed
+    // If so, redirect to dashboard
+    if (isLoaded && clerkUser) {
+      // User is already signed in — check if they already completed onboarding
+      fetch("/api/auth")
+        .then(res => res.json())
+        .then(data => {
+          if (data.authenticated && data.user?.onboardingCompleted) {
+            router.push("/")
+          }
+        })
+        .catch(() => {})
     }
-    if (!loading && user?.onboardingCompleted) {
-      router.push("/")
-    }
-  }, [user, loading, router])
+  }, [isLoaded, clerkUser, router])
 
-  if (loading) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
@@ -27,9 +34,7 @@ export default function OnboardingPage() {
     )
   }
 
-  if (!user || user.onboardingCompleted) {
-    return null
-  }
-
+  // Show the wizard for logged-out users (main use case) AND
+  // for logged-in users who haven't completed onboarding
   return <OnboardingWizard />
 }

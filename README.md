@@ -1,4 +1,6 @@
-# Shadow GPT - Habit Tracker
+# Zenith AI - Habit Tracker
+
+🌐 **[ZenithAI.me](https://zenithai.me)**
 
 A modern, full-featured habit tracking application built with Next.js 14, TypeScript, and Tailwind CSS. Track your daily routines with the **SAVERS** methodology, monitor your vices, manage personal challenges, and create custom trackers.
 
@@ -53,7 +55,7 @@ A modern, full-featured habit tracking application built with Next.js 14, TypeSc
 1. **Clone and install dependencies**
    ```bash
    git clone <your-repo-url>
-   cd shadow-gpt-react
+   cd zenith-ai
    npm install
    ```
 
@@ -64,7 +66,7 @@ A modern, full-featured habit tracking application built with Next.js 14, TypeSc
    
    Edit `.env.local` with your values:
    ```env
-   DATABASE_URL="postgresql://user:password@localhost:5432/shadow_gpt"
+   DATABASE_URL="postgresql://user:password@localhost:5432/zenith_ai"
    JWT_SECRET="your-super-secret-jwt-key-at-least-32-characters"
    OPENAI_API_KEY="sk-your-openai-api-key"
    ```
@@ -136,7 +138,7 @@ A modern, full-featured habit tracking application built with Next.js 14, TypeSc
 ## 📁 Project Structure
 
 ```
-shadow-gpt-react/
+zenith-ai/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API Routes
 │   │   ├── affirmations/  # AI affirmations
@@ -236,4 +238,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-Built with ❤️ using Next.js, TypeScript, and Tailwind CSS
+Built with ❤️ using Next.js, TypeScript, and Tailwind CSS — [ZenithAI.me](https://zenithai.me)

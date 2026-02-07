@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { generateOnboardingContent } from '@/lib/onboarding'
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
-    if (!user) {
+    // The user just created a Clerk account in the onboarding wizard,
+    // so they should now be authenticated via Clerk session.
+    const { userId: clerkId } = await auth()
+    if (!clerkId) {
       return NextResponse.json(
-        { success: false, message: 'Not authenticated' },
+        { success: false, message: 'Not authenticated. Please create your account first.' },
+        { status: 401 }
+      )
+    }
+
+    // Get the Clerk user details (email, name)
+    const clerkUser = await currentUser()
+    if (!clerkUser) {
+      return NextResponse.json(
+        { success: false, message: 'Could not retrieve user details' },
         { status: 401 }
       )
     }
@@ -31,10 +42,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update user profile with onboarding data
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
+    const email = clerkUser.emailAddresses[0]?.emailAddress || ''
+
+    // Upsert the user — create DB record if it doesn't exist, or update if it does
+    const updatedUser = await prisma.user.upsert({
+      where: { clerkId },
+      create: {
+        clerkId,
+        email,
+        name,
+        age: parsedAge,
+        disciplineLevel,
+        painPoints,
+        painPointsOther: painPointsOther || null,
+        vision,
+        visionCustom: visionCustom || null,
+        pactText,
+        onboardingCompleted: true,
+      },
+      update: {
         name,
         age: parsedAge,
         disciplineLevel,
@@ -47,6 +73,7 @@ export async function POST(request: NextRequest) {
       },
       select: {
         id: true,
+        clerkId: true,
         email: true,
         name: true,
         age: true,
@@ -62,7 +89,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Generate personalized content in the background
+    // Generate personalized content
     const content = await generateOnboardingContent(painPoints, painPointsOther, vision, visionCustom)
 
     // Create suggested trackers
@@ -71,7 +98,7 @@ export async function POST(request: NextRequest) {
         try {
           await prisma.customTracker.create({
             data: {
-              userId: user.id,
+              userId: updatedUser.id,
               title: tracker.title,
               icon: tracker.icon,
               color: tracker.color,
@@ -91,7 +118,7 @@ export async function POST(request: NextRequest) {
 
       await prisma.challenge.create({
         data: {
-          userId: user.id,
+          userId: updatedUser.id,
           title: content.challenge.title,
           description: content.challenge.description,
           durationDays: 7,

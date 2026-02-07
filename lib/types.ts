@@ -1,7 +1,8 @@
-// Type definitions for Shadow GPT
+// Type definitions for Zenith AI
 
 export interface User {
   id: string
+  clerkId: string
   email: string
   name: string | null
   age: number | null

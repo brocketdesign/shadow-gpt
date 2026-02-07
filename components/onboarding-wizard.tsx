@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useSignUp, useSignIn } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
@@ -15,6 +15,10 @@ import {
   Loader2,
   Check,
   Zap,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 import {
   DISCIPLINE_LEVELS,
@@ -23,12 +27,13 @@ import {
 } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-const TOTAL_STEPS = 6
+const TOTAL_STEPS = 7
 
 export function OnboardingWizard() {
   const router = useRouter()
-  const { refreshUser } = useAuth()
   const { toast } = useToast()
+  const { isLoaded: signUpLoaded, signUp, setActive: setSignUpActive } = useSignUp()
+  const { isLoaded: signInLoaded, signIn, setActive: setSignInActive } = useSignIn()
 
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -36,6 +41,7 @@ export function OnboardingWizard() {
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null)
   const holdStartRef = useRef<number>(0)
   const animFrameRef = useRef<number>(0)
+  const [showPassword, setShowPassword] = useState(false)
 
   // Form data
   const [name, setName] = useState("")
@@ -45,6 +51,13 @@ export function OnboardingWizard() {
   const [painPointsOther, setPainPointsOther] = useState("")
   const [vision, setVision] = useState<string[]>([])
   const [visionCustom, setVisionCustom] = useState("")
+
+  // Account creation fields (Step 5)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [verificationCode, setVerificationCode] = useState("")
+  const [pendingVerification, setPendingVerification] = useState(false)
+  const [accountError, setAccountError] = useState("")
 
   // Generated content
   const [generatedContent, setGeneratedContent] = useState<{
@@ -72,10 +85,11 @@ export function OnboardingWizard() {
       case 2: return painPoints.length > 0
       case 3: return vision.length > 0
       case 4: return true // hold-to-sign handles this
-      case 5: return true
+      case 5: return email.trim().length > 0 && password.trim().length >= 8
+      case 6: return true
       default: return false
     }
-  }, [step, name, age, disciplineLevel, painPoints, vision])
+  }, [step, name, age, disciplineLevel, painPoints, vision, email, password])
 
   const togglePainPoint = (value: string) => {
     setPainPoints(prev =>
@@ -93,18 +107,83 @@ export function OnboardingWizard() {
     )
   }
 
-  const submitOnboarding = useCallback(async () => {
-    const parsedAge = parseInt(age, 10)
-    if (isNaN(parsedAge) || parsedAge < 13 || parsedAge > 120) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid age.",
-        variant: "destructive",
-      })
-      return
-    }
+  /**
+   * After the pact is signed, create the Clerk account and then
+   * save the onboarding data to the database.
+   */
+  const handleCreateAccount = useCallback(async () => {
+    if (!signUpLoaded || !signUp) return
 
     setLoading(true)
+    setAccountError("")
+
+    try {
+      // 1. Create the Clerk sign-up
+      const result = await signUp.create({
+        emailAddress: email,
+        password,
+        firstName: name.trim(),
+      })
+
+      // 2. If email verification is required, send verification email
+      if (result.status === "missing_requirements" && result.unverifiedFields?.includes("email_address")) {
+        await signUp.prepareEmailAddressVerification({ strategy: "email_code" })
+        setPendingVerification(true)
+        setLoading(false)
+        return
+      }
+
+      // 3. If sign-up is complete, set the session and save onboarding data
+      if (result.status === "complete" && result.createdSessionId) {
+        await setSignUpActive({ session: result.createdSessionId })
+        await saveOnboardingData()
+      }
+    } catch (err: unknown) {
+      console.error("Sign-up error:", err)
+      const clerkError = err as { errors?: { message: string; longMessage?: string }[] }
+      const message = clerkError.errors?.[0]?.longMessage || clerkError.errors?.[0]?.message || "Account creation failed. Please try again."
+      setAccountError(message)
+    } finally {
+      setLoading(false)
+    }
+  }, [signUpLoaded, signUp, setSignUpActive, email, password, name])
+
+  /**
+   * Handle email verification code submission
+   */
+  const handleVerifyEmail = useCallback(async () => {
+    if (!signUpLoaded || !signUp) return
+
+    setLoading(true)
+    setAccountError("")
+
+    try {
+      const result = await signUp.attemptEmailAddressVerification({
+        code: verificationCode,
+      })
+
+      if (result.status === "complete" && result.createdSessionId) {
+        await setSignUpActive({ session: result.createdSessionId })
+        await saveOnboardingData()
+      } else {
+        setAccountError("Verification failed. Please try again.")
+      }
+    } catch (err: unknown) {
+      console.error("Verification error:", err)
+      const clerkError = err as { errors?: { message: string; longMessage?: string }[] }
+      const message = clerkError.errors?.[0]?.longMessage || clerkError.errors?.[0]?.message || "Invalid verification code."
+      setAccountError(message)
+    } finally {
+      setLoading(false)
+    }
+  }, [signUpLoaded, signUp, setSignUpActive, verificationCode])
+
+  /**
+   * Save onboarding data to the database after successful account creation.
+   */
+  const saveOnboardingData = useCallback(async () => {
+    const parsedAge = parseInt(age, 10)
+
     try {
       const res = await fetch("/api/onboarding", {
         method: "POST",
@@ -124,12 +203,11 @@ export function OnboardingWizard() {
 
       if (data.success) {
         setGeneratedContent(data.generatedContent)
-        setStep(5)
-        await refreshUser()
+        setStep(6)
       } else {
         toast({
           title: "Error",
-          description: data.message || "Something went wrong",
+          description: data.message || "Something went wrong saving your profile",
           variant: "destructive",
         })
       }
@@ -139,12 +217,10 @@ export function OnboardingWizard() {
         description: "Network error. Please try again.",
         variant: "destructive",
       })
-    } finally {
-      setLoading(false)
     }
-  }, [name, age, disciplineLevel, painPoints, painPointsOther, vision, visionCustom, pactText, refreshUser, toast])
+  }, [name, age, disciplineLevel, painPoints, painPointsOther, vision, visionCustom, pactText, toast])
 
-  // Hold-to-sign logic
+  // Hold-to-sign logic — after signing, go to account creation step
   const startHold = useCallback(() => {
     holdStartRef.current = Date.now()
     const animate = () => {
@@ -152,13 +228,14 @@ export function OnboardingWizard() {
       const progress = Math.min((elapsed / 3000) * 100, 100)
       setHoldProgress(progress)
       if (progress >= 100) {
-        submitOnboarding()
+        // Pact signed — go to account creation step
+        setStep(5)
         return
       }
       animFrameRef.current = requestAnimationFrame(animate)
     }
     animFrameRef.current = requestAnimationFrame(animate)
-  }, [submitOnboarding])
+  }, [])
 
   const endHold = useCallback(() => {
     if (holdTimerRef.current) {
@@ -186,6 +263,12 @@ export function OnboardingWizard() {
 
   const goBack = () => {
     if (step > 0) {
+      // Skip back over verification state
+      if (step === 5 && pendingVerification) {
+        setPendingVerification(false)
+        setAccountError("")
+        return
+      }
       setStep(s => s - 1)
     }
   }
@@ -203,7 +286,7 @@ export function OnboardingWizard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
       {/* Progress bar */}
-      {step > 0 && step < 5 && (
+      {step > 0 && step < 6 && (
         <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
           <div className="max-w-lg mx-auto">
             <Progress value={progressPercent} className="h-2" />
@@ -521,12 +604,7 @@ export function OnboardingWizard() {
                         style={{ width: `${holdProgress}%` }}
                       />
                       <span className="relative z-10 flex items-center justify-center gap-2">
-                        {loading ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Calibrating Protocol...
-                          </>
-                        ) : holdProgress > 0 ? (
+                        {holdProgress > 0 ? (
                           <>
                             <Zap className="w-5 h-5" />
                             Signing... {Math.round(holdProgress)}%
@@ -550,10 +628,158 @@ export function OnboardingWizard() {
               </motion.div>
             )}
 
-            {/* Step 5: AI Setup (Results) */}
+            {/* Step 5: Account Creation (Clerk embedded) */}
             {step === 5 && (
               <motion.div
                 key="step5"
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 rounded-full gradient-bg flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-8 h-8 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {pendingVerification ? "Verify Your Email" : "Create Your Account"}
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    {pendingVerification 
+                      ? `We sent a verification code to ${email}`
+                      : "Your protocol is ready. Create an account to activate it."
+                    }
+                  </p>
+                </div>
+
+                {!pendingVerification ? (
+                  /* Email + Password form */
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Input
+                          type="email"
+                          placeholder="your@email.com"
+                          value={email}
+                          onChange={(e) => { setEmail(e.target.value); setAccountError("") }}
+                          className="pl-10 text-lg"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Password <span className="text-gray-400 font-normal">(min. 8 characters)</span>
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => { setPassword(e.target.value); setAccountError("") }}
+                          className="pl-10 pr-10 text-lg"
+                          minLength={8}
+                          disabled={loading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {accountError && (
+                      <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{accountError}</p>
+                    )}
+
+                    <Button
+                      variant="gradient"
+                      size="lg"
+                      onClick={handleCreateAccount}
+                      disabled={!canProceed() || loading || !signUpLoaded}
+                      className="w-full text-lg py-6"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                          Creating account...
+                        </>
+                      ) : (
+                        <>
+                          Create Account & Activate Protocol
+                          <ArrowRight className="ml-2 w-5 h-5" />
+                        </>
+                      )}
+                    </Button>
+
+                    <p className="text-xs text-center text-gray-400">
+                      By creating an account, you agree to our terms of service and privacy policy.
+                    </p>
+                  </div>
+                ) : (
+                  /* Email verification form */
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
+                      <Input
+                        type="text"
+                        placeholder="Enter 6-digit code"
+                        value={verificationCode}
+                        onChange={(e) => { setVerificationCode(e.target.value); setAccountError("") }}
+                        className="text-lg text-center tracking-widest"
+                        maxLength={6}
+                        disabled={loading}
+                      />
+                    </div>
+
+                    {accountError && (
+                      <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{accountError}</p>
+                    )}
+
+                    <Button
+                      variant="gradient"
+                      size="lg"
+                      onClick={handleVerifyEmail}
+                      disabled={verificationCode.length < 6 || loading}
+                      className="w-full text-lg py-6"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                          Verifying...
+                        </>
+                      ) : (
+                        <>
+                          Verify & Activate
+                          <Check className="ml-2 w-5 h-5" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <Button variant="outline" onClick={goBack} className="flex-1" disabled={loading}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 6: Results / Completion */}
+            {step === 6 && (
+              <motion.div
+                key="step6"
                 variants={slideVariants}
                 initial="enter"
                 animate="center"

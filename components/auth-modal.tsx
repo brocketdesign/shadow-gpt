@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useSignIn } from "@clerk/nextjs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAuth } from "@/components/providers/auth-provider"
 import { useToast } from "@/components/ui/use-toast"
-import { Loader2, Sparkles, Mail, Lock, User } from "lucide-react"
+import { Loader2, Sparkles, Mail, Lock } from "lucide-react"
 
 interface AuthModalProps {
   open: boolean
@@ -16,12 +16,11 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ open, onOpenChange }: AuthModalProps) {
-  const [mode, setMode] = useState<"login" | "register">("login")
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
-  const { login, register } = useAuth()
+  const [error, setError] = useState("")
+  const { isLoaded, signIn, setActive } = useSignIn()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -30,52 +29,39 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     if (!open) {
       setEmail("")
       setPassword("")
-      setName("")
-      setMode("login")
+      setError("")
     }
   }, [open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isLoaded || !signIn) return
+
     setLoading(true)
+    setError("")
 
     try {
-      if (mode === "login") {
-        const result = await login(email, password)
-        if (result.success) {
-          toast({
-            title: "Connexion réussie !",
-            description: "Bienvenue sur Shadow GPT 🎉",
-            variant: "success",
-          })
-          onOpenChange(false)
-        } else {
-          toast({
-            title: "Erreur de connexion",
-            description: result.message,
-            variant: "destructive",
-          })
-        }
+      const result = await signIn.create({
+        identifier: email,
+        password,
+      })
+
+      if (result.status === "complete" && result.createdSessionId) {
+        await setActive({ session: result.createdSessionId })
+        toast({
+          title: "Connexion réussie !",
+          description: "Bienvenue sur Zenith AI 🎉",
+          variant: "success",
+        })
+        onOpenChange(false)
+        router.refresh()
       } else {
-        const result = await register(email, password, name)
-        if (result.success) {
-          toast({
-            title: "Compte créé !",
-            description: "Bienvenue sur Shadow GPT 🎉",
-            variant: "success",
-          })
-          onOpenChange(false)
-          if (result.needsOnboarding) {
-            router.push("/onboarding")
-          }
-        } else {
-          toast({
-            title: "Erreur d'inscription",
-            description: result.message,
-            variant: "destructive",
-          })
-        }
+        setError("Sign-in could not be completed. Please try again.")
       }
+    } catch (err: unknown) {
+      const clerkError = err as { errors?: { message: string; longMessage?: string }[] }
+      const message = clerkError.errors?.[0]?.longMessage || clerkError.errors?.[0]?.message || "Erreur de connexion"
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -89,35 +75,14 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <DialogTitle className="text-center text-2xl">
-            {mode === "login" ? "Bon retour !" : "Créer un compte"}
+            Bon retour !
           </DialogTitle>
           <DialogDescription className="text-center">
-            {mode === "login" 
-              ? "Connecte-toi pour continuer ta transformation"
-              : "Commence ton voyage vers une vie meilleure"
-            }
+            Connecte-toi pour continuer ta transformation
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          {mode === "register" && (
-            <div className="space-y-2">
-              <Label htmlFor="name">Nom</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Ton prénom"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-          )}
-
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
@@ -151,50 +116,37 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             </div>
           </div>
 
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>
+          )}
+
           <Button 
             type="submit" 
             className="w-full" 
             variant="gradient"
             size="lg"
-            disabled={loading}
+            disabled={loading || !isLoaded}
           >
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Chargement...
               </>
-            ) : mode === "login" ? (
-              "Se connecter"
             ) : (
-              "Créer mon compte"
+              "Se connecter"
             )}
           </Button>
         </form>
 
         <div className="mt-4 text-center text-sm text-gray-600">
-          {mode === "login" ? (
-            <>
-              Pas encore de compte ?{" "}
-              <button
-                type="button"
-                onClick={() => setMode("register")}
-                className="text-indigo-600 font-semibold hover:underline"
-              >
-                Inscris-toi
-              </button>
-            </>
-          ) : (
-            <>
-              Déjà un compte ?{" "}
-              <button
-                type="button"
-                onClick={() => setMode("login")}
-                className="text-indigo-600 font-semibold hover:underline"
-              >
-                Connecte-toi
-              </button>
-            </>
-          )}
+          Pas encore de compte ?{" "}
+          <button
+            type="button"
+            onClick={() => { onOpenChange(false); router.push("/onboarding") }}
+            className="text-indigo-600 font-semibold hover:underline"
+          >
+            Commence ici
+          </button>
         </div>
       </DialogContent>
     </Dialog>
