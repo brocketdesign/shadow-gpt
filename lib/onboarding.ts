@@ -83,7 +83,7 @@ export async function generateOnboardingContent(
     .slice(0, 3)
 
   // Pick a challenge based on the first pain point
-  const primaryPainPoint = painPoints[0]
+  const primaryPainPoint = painPoints.length > 0 ? painPoints[0] : 'procrastination'
   const challenge = PAIN_POINT_CHALLENGES[primaryPainPoint] || PAIN_POINT_CHALLENGES['procrastination']
 
   // Generate affirmations

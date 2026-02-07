@@ -94,6 +94,16 @@ export function OnboardingWizard() {
   }
 
   const submitOnboarding = useCallback(async () => {
+    const parsedAge = parseInt(age, 10)
+    if (isNaN(parsedAge) || parsedAge < 13 || parsedAge > 120) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid age.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
     try {
       const res = await fetch("/api/onboarding", {
@@ -101,7 +111,7 @@ export function OnboardingWizard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          age: parseInt(age, 10),
+          age: parsedAge,
           disciplineLevel,
           painPoints,
           painPointsOther: painPointsOther.trim() || undefined,

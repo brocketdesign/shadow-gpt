@@ -23,12 +23,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const parsedAge = typeof age === 'number' ? age : parseInt(age, 10)
+    if (isNaN(parsedAge) || parsedAge < 13 || parsedAge > 120) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid age' },
+        { status: 400 }
+      )
+    }
+
     // Update user profile with onboarding data
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         name,
-        age: parseInt(age, 10),
+        age: parsedAge,
         disciplineLevel,
         painPoints,
         painPointsOther: painPointsOther || null,
