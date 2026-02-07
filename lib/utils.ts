@@ -1,7 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addDays, subDays, differenceInDays } from "date-fns"
-import { fr } from "date-fns/locale"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -9,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(date: Date | string, formatStr: string = "PPP") {
   const d = typeof date === "string" ? parseISO(date) : date
-  return format(d, formatStr, { locale: fr })
+  return format(d, formatStr)
 }
 
 export function formatDateISO(date: Date): string {
@@ -121,14 +120,18 @@ export function calculateStreak(
   return { current, best: Math.max(best, streak) }
 }
 
-export const MONTH_NAMES_FR = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+export const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
 ]
 
-export function getMonthNameFr(month: number): string {
-  return MONTH_NAMES_FR[month - 1] || ""
+export function getMonthName(month: number): string {
+  return MONTH_NAMES[month - 1] || ""
 }
+
+/** @deprecated Use getMonthName instead */
+export const getMonthNameFr = getMonthName
+export const MONTH_NAMES_FR = MONTH_NAMES
 
 export function generateRandomColor(): string {
   const colors = [

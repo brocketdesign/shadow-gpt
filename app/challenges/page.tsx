@@ -27,7 +27,6 @@ import {
   ArrowLeft
 } from "lucide-react"
 import { format, differenceInDays, addDays, parseISO } from "date-fns"
-import { fr } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import type { Challenge, ChallengeProgress } from "@/lib/types"
 
@@ -110,8 +109,8 @@ export default function ChallengesPage() {
 
       if (data.success) {
         toast({
-          title: "Challenge créé ! 🎯",
-          description: "Bonne chance dans ton défi !",
+          title: "Challenge created! 🎯",
+          description: "Good luck with your challenge!",
           variant: "success",
         })
         setShowCreateModal(false)
@@ -127,8 +126,8 @@ export default function ChallengesPage() {
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de créer le challenge",
+        title: "Error",
+        description: "Unable to create challenge",
         variant: "destructive",
       })
     } finally {
@@ -156,7 +155,7 @@ export default function ChallengesPage() {
       if (data.success && data.description) {
         setCreateForm((prev) => ({ ...prev, description: data.description }))
         toast({
-          title: "Description améliorée ! ✨",
+          title: "Description enhanced! ✨",
           variant: "success",
         })
       }
@@ -184,12 +183,12 @@ export default function ChallengesPage() {
 
       if (data.success) {
         toast({
-          title: status === "success" ? "Bravo ! 🎉" : status === "fail" ? "Dommage..." : "Passé",
+          title: status === "success" ? "Well done! 🎉" : status === "fail" ? "Too bad..." : "Skipped",
           description: status === "success" 
-            ? "Continue comme ça !" 
+            ? "Keep it up!" 
             : status === "fail" 
-              ? "Demain est un nouveau jour" 
-              : "Tu peux reprendre demain",
+              ? "Tomorrow is a new day" 
+              : "You can resume tomorrow",
           variant: status === "success" ? "success" : "default",
         })
         loadChallenges(activeTab === "all" ? undefined : activeTab)
@@ -197,15 +196,15 @@ export default function ChallengesPage() {
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible d'enregistrer le check-in",
+        title: "Error",
+        description: "Unable to record check-in",
         variant: "destructive",
       })
     }
   }
 
   const handleDeleteChallenge = async (challengeId: string) => {
-    if (!confirm("Supprimer ce challenge ?")) return
+    if (!confirm("Delete this challenge?")) return
 
     try {
       const res = await fetch("/api/challenges", {
@@ -221,7 +220,7 @@ export default function ChallengesPage() {
 
       if (data.success) {
         toast({
-          title: "Challenge supprimé",
+          title: "Challenge deleted",
           variant: "default",
         })
         loadChallenges(activeTab === "all" ? undefined : activeTab)
@@ -229,8 +228,8 @@ export default function ChallengesPage() {
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de supprimer",
+        title: "Error",
+        description: "Unable to delete",
         variant: "destructive",
       })
     }
@@ -257,7 +256,7 @@ export default function ChallengesPage() {
               Mes Challenges
             </h1>
             <p className="text-gray-600 mt-1">
-              Transforme tes objectifs en réalité, un jour à la fois
+              Turn your goals into reality, one day at a time
             </p>
           </div>
           <Button 
@@ -266,17 +265,17 @@ export default function ChallengesPage() {
             onClick={() => setShowCreateModal(true)}
           >
             <Plus className="w-5 h-5 mr-2" />
-            Nouveau Challenge
+            New Challenge
           </Button>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="grid grid-cols-4 w-full max-w-md">
-            <TabsTrigger value="active">🔥 Actifs</TabsTrigger>
-            <TabsTrigger value="completed">✅ Complétés</TabsTrigger>
-            <TabsTrigger value="failed">❌ Échoués</TabsTrigger>
-            <TabsTrigger value="all">📋 Tous</TabsTrigger>
+            <TabsTrigger value="active">🔥 Active</TabsTrigger>
+            <TabsTrigger value="completed">✅ Completed</TabsTrigger>
+            <TabsTrigger value="failed">❌ Failed</TabsTrigger>
+            <TabsTrigger value="all">📋 All</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -297,14 +296,14 @@ export default function ChallengesPage() {
           <Card className="p-12 text-center">
             <Target className="w-16 h-16 mx-auto text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              Aucun challenge {activeTab !== "all" && activeTab}
+              No challenges {activeTab !== "all" && activeTab}
             </h3>
             <p className="text-gray-500 mb-6">
-              Crée ton premier challenge pour commencer ta transformation !
+              Create your first challenge to start your transformation!
             </p>
             <Button variant="gradient" onClick={() => setShowCreateModal(true)}>
               <Plus className="w-5 h-5 mr-2" />
-              Créer un Challenge
+              Create a Challenge
             </Button>
           </Card>
         ) : (
@@ -326,9 +325,9 @@ export default function ChallengesPage() {
                       challenge.status === "completed" && "bg-green-100 text-green-700",
                       challenge.status === "failed" && "bg-red-100 text-red-700",
                     )}>
-                      {challenge.status === "active" ? "En cours" 
-                        : challenge.status === "completed" ? "Réussi" 
-                        : "Échoué"}
+                      {challenge.status === "active" ? "In Progress" 
+                        : challenge.status === "completed" ? "Completed" 
+                        : "Failed"}
                     </span>
                   </div>
                 </CardHeader>
@@ -341,9 +340,9 @@ export default function ChallengesPage() {
                   
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Progression</span>
+                      <span className="text-gray-600">Progress</span>
                       <span className="font-semibold">
-                        {challenge.progress.completedDays}/{challenge.progress.totalDays} jours
+                        {challenge.progress.completedDays}/{challenge.progress.totalDays} days
                       </span>
                     </div>
                     <Progress value={challenge.progress.percentComplete} />
@@ -351,17 +350,17 @@ export default function ChallengesPage() {
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-1 text-orange-600">
                         <Flame className="w-4 h-4" />
-                        <span>{challenge.progress.currentStreak} jours</span>
+                        <span>{challenge.progress.currentStreak} days</span>
                       </div>
                       <div className="flex items-center gap-1 text-yellow-600">
                         <Trophy className="w-4 h-4" />
-                        <span>Record: {challenge.progress.bestStreak}</span>
+                        <span>Best: {challenge.progress.bestStreak}</span>
                       </div>
                     </div>
                     
                     {challenge.status === "active" && challenge.progress.daysRemaining > 0 && (
                       <div className="text-xs text-gray-500 text-center">
-                        {challenge.progress.daysRemaining} jours restants
+                        {challenge.progress.daysRemaining} days remaining
                       </div>
                     )}
                   </div>
@@ -384,12 +383,12 @@ export default function ChallengesPage() {
 
           <form onSubmit={handleCreateChallenge} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Titre du Challenge *</Label>
+              <Label htmlFor="title">Challenge Title *</Label>
               <Input
                 id="title"
                 value={createForm.title}
                 onChange={(e) => setCreateForm((p) => ({ ...p, title: e.target.value }))}
-                placeholder="Ex: 30 jours sans alcool"
+                placeholder="E.g., 30 days without alcohol"
                 required
               />
             </div>
@@ -400,7 +399,7 @@ export default function ChallengesPage() {
                 id="description"
                 value={createForm.description}
                 onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
-                placeholder="Décris ton challenge et pourquoi tu veux le réaliser..."
+                placeholder="Describe your challenge and why you want to accomplish it..."
                 className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none h-24"
               />
               <Button
@@ -415,30 +414,30 @@ export default function ChallengesPage() {
                 ) : (
                   <Sparkles className="w-4 h-4 mr-2" />
                 )}
-                Améliorer avec AI
+                Enhance with AI
               </Button>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="duration">Durée (jours) *</Label>
+                <Label htmlFor="duration">Duration (days) *</Label>
                 <select
                   id="duration"
                   value={createForm.durationDays}
                   onChange={(e) => setCreateForm((p) => ({ ...p, durationDays: parseInt(e.target.value) }))}
                   className="w-full p-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value={7}>7 jours</option>
-                  <option value={14}>14 jours</option>
-                  <option value={21}>21 jours</option>
-                  <option value={30}>30 jours</option>
-                  <option value={60}>60 jours</option>
-                  <option value={90}>90 jours</option>
+                  <option value={7}>7 days</option>
+                  <option value={14}>14 days</option>
+                  <option value={21}>21 days</option>
+                  <option value={30}>30 days</option>
+                  <option value={60}>60 days</option>
+                  <option value={90}>90 days</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="startDate">Date de début</Label>
+                <Label htmlFor="startDate">Start Date</Label>
                 <Input
                   id="startDate"
                   type="date"
@@ -452,8 +451,8 @@ export default function ChallengesPage() {
               <div className="flex items-start gap-3">
                 <span className="text-2xl">💡</span>
                 <div className="text-sm text-blue-800">
-                  <p className="font-semibold mb-1">Conseil pour réussir</p>
-                  <p>Choisis un challenge réaliste mais ambitieux. La constance est plus importante que l'intensité !</p>
+                  <p className="font-semibold mb-1">Tip for success</p>
+                  <p>Choose a realistic but ambitious challenge. Consistency matters more than intensity!</p>
                 </div>
               </div>
             </div>
@@ -465,7 +464,7 @@ export default function ChallengesPage() {
                 onClick={() => setShowCreateModal(false)}
                 className="flex-1"
               >
-                Annuler
+                Cancel
               </Button>
               <Button
                 type="submit"
@@ -478,7 +477,7 @@ export default function ChallengesPage() {
                 ) : (
                   <Target className="w-4 h-4 mr-2" />
                 )}
-                Créer
+                Create
               </Button>
             </div>
           </form>
@@ -505,27 +504,27 @@ export default function ChallengesPage() {
                     <div className="text-3xl font-bold text-indigo-600">
                       {selectedChallenge.progress.percentComplete}%
                     </div>
-                    <div className="text-sm text-gray-600">Progression</div>
+                    <div className="text-sm text-gray-600">Progress</div>
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-orange-600 flex items-center gap-1">
                       <Flame className="w-6 h-6" />
                       {selectedChallenge.progress.currentStreak}
                     </div>
-                    <div className="text-sm text-gray-600">Série actuelle</div>
+                    <div className="text-sm text-gray-600">Current Streak</div>
                   </div>
                 </div>
                 <Progress value={selectedChallenge.progress.percentComplete} className="h-4" />
                 <div className="flex justify-between mt-2 text-sm text-gray-600">
-                  <span>{selectedChallenge.progress.completedDays} jours réussis</span>
-                  <span>Record: {selectedChallenge.progress.bestStreak} jours</span>
+                  <span>{selectedChallenge.progress.completedDays} days completed</span>
+                  <span>Best: {selectedChallenge.progress.bestStreak} days</span>
                 </div>
               </div>
 
               {/* Check-in buttons for active challenges */}
               {selectedChallenge.status === "active" && (
                 <div className="space-y-3">
-                  <h4 className="font-semibold">Check-in d'aujourd'hui</h4>
+                  <h4 className="font-semibold">Today's Check-in</h4>
                   <div className="flex gap-3">
                     <Button
                       variant="outline"
@@ -533,7 +532,7 @@ export default function ChallengesPage() {
                       onClick={() => handleCheckIn(selectedChallenge.id, "success")}
                     >
                       <Check className="w-5 h-5 mr-2" />
-                      Réussi
+                      Success
                     </Button>
                     <Button
                       variant="outline"
@@ -541,7 +540,7 @@ export default function ChallengesPage() {
                       onClick={() => handleCheckIn(selectedChallenge.id, "fail")}
                     >
                       <X className="w-5 h-5 mr-2" />
-                      Échoué
+                      Failed
                     </Button>
                     <Button
                       variant="outline"
@@ -549,7 +548,7 @@ export default function ChallengesPage() {
                       onClick={() => handleCheckIn(selectedChallenge.id, "skip")}
                     >
                       <SkipForward className="w-5 h-5 mr-2" />
-                      Passer
+                      Skip
                     </Button>
                   </div>
                 </div>
@@ -559,11 +558,11 @@ export default function ChallengesPage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  <span>Début: {format(parseISO(selectedChallenge.startDate), "d MMMM yyyy", { locale: fr })}</span>
+                  <span>Start: {format(parseISO(selectedChallenge.startDate), "MMMM d, yyyy")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  <span>Fin: {format(parseISO(selectedChallenge.endDate), "d MMMM yyyy", { locale: fr })}</span>
+                  <span>End: {format(parseISO(selectedChallenge.endDate), "MMMM d, yyyy")}</span>
                 </div>
               </div>
 
@@ -575,7 +574,7 @@ export default function ChallengesPage() {
                   onClick={() => handleDeleteChallenge(selectedChallenge.id)}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Supprimer ce challenge
+                  Delete this challenge
                 </Button>
               </div>
             </div>

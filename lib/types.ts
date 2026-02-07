@@ -215,29 +215,29 @@ export interface AuthResponse extends ApiResponse {
 
 // Config types
 export const SAVERS_CONFIG = {
-  silence: { label: 'Silence (Méditation)', icon: '🧘', key: 'saversSilence' },
+  silence: { label: 'Silence (Meditation)', icon: '🧘', key: 'saversSilence' },
   affirmations: { label: 'Affirmations', icon: '💬', key: 'saversAffirmations' },
-  visualization: { label: 'Visualisation', icon: '👁️', key: 'saversVisualization' },
-  exercise: { label: 'Exercise (Sport)', icon: '🏃', key: 'saversExercise' },
-  reading: { label: 'Reading (Lecture)', icon: '📚', key: 'saversReading' },
-  scribing: { label: 'Scribing (Écriture)', icon: '✍️', key: 'saversScribing' },
+  visualization: { label: 'Visualization', icon: '👁️', key: 'saversVisualization' },
+  exercise: { label: 'Exercise (Workout)', icon: '🏃', key: 'saversExercise' },
+  reading: { label: 'Reading', icon: '📚', key: 'saversReading' },
+  scribing: { label: 'Scribing (Journaling)', icon: '✍️', key: 'saversScribing' },
 } as const
 
 export const VICES_CONFIG = {
-  coke: { label: 'Coca/Sodas', icon: '🥤', key: 'viceFreeCoke' },
-  beer: { label: 'Bière/Alcool', icon: '🍺', key: 'viceFreeBeer' },
+  coke: { label: 'Soda/Cola', icon: '🥤', key: 'viceFreeCoke' },
+  beer: { label: 'Beer/Alcohol', icon: '🍺', key: 'viceFreeBeer' },
   weed: { label: 'Cannabis', icon: '🌿', key: 'viceFreeWeed' },
   sns: { label: 'SNS (+30min)', icon: '📱', key: 'viceFreeSns' },
-  porn: { label: 'Contenu Porno', icon: '🔞', key: 'viceFreePorn' },
+  porn: { label: 'Porn', icon: '🔞', key: 'viceFreePorn' },
 } as const
 
 export const DEFAULT_MANTRAS = [
-  "Avec discipline, la liberté est une délivrance. Sans discipline, la liberté est un piège.",
-  "Chaque jour est une nouvelle opportunité de devenir la meilleure version de moi-même.",
-  "Ma force intérieure grandit à chaque choix conscient que je fais.",
-  "Je construis ma liberté brique par brique, jour après jour.",
-  "Les vices d'hier ne définissent pas l'homme que je deviens aujourd'hui.",
-  "Je suis plus fort que mes tentations.",
-  "Chaque petite victoire construit une grande transformation.",
-  "Mon esprit est clair, mon corps est fort, mon âme est libre.",
+  "Discipline equals freedom. Without discipline, freedom is a trap.",
+  "Every day is a new opportunity to become the best version of myself.",
+  "My inner strength grows with every conscious choice I make.",
+  "I build my freedom brick by brick, day by day.",
+  "Yesterday's vices do not define the person I am becoming today.",
+  "I am stronger than my temptations.",
+  "Every small victory builds a great transformation.",
+  "My mind is clear, my body is strong, my soul is free.",
 ]

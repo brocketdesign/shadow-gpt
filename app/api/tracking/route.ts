@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Non connecté' },
+        { success: false, message: 'Not authenticated' },
         { status: 401 }
       )
     }
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       case 'get_day_data': {
         if (!date) {
           return NextResponse.json(
-            { success: false, message: 'Date manquante' },
+            { success: false, message: 'Date required' },
             { status: 400 }
           )
         }
@@ -74,14 +74,14 @@ export async function GET(request: NextRequest) {
       
       default:
         return NextResponse.json(
-          { success: false, message: 'Action non reconnue' },
+          { success: false, message: 'Unknown action' },
           { status: 400 }
         )
     }
   } catch (error) {
     console.error('Tracking GET error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, message: 'Server error' },
       { status: 500 }
     )
   }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Non connecté' },
+        { success: false, message: 'Not authenticated' },
         { status: 401 }
       )
     }
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       case 'update_day': {
         if (!date) {
           return NextResponse.json(
-            { success: false, message: 'Date manquante' },
+            { success: false, message: 'Date required' },
             { status: 400 }
           )
         }
@@ -165,14 +165,14 @@ export async function POST(request: NextRequest) {
       
       default:
         return NextResponse.json(
-          { success: false, message: 'Action non reconnue' },
+          { success: false, message: 'Unknown action' },
           { status: 400 }
         )
     }
   } catch (error) {
     console.error('Tracking POST error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, message: 'Server error' },
       { status: 500 }
     )
   }

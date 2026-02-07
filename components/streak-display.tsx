@@ -106,12 +106,12 @@ export function StreakDisplay({ year, month }: StreakDisplayProps) {
           </div>
           <div className="text-3xl font-bold mb-1">
             {data.current}
-            <span className="text-lg opacity-80"> jours</span>
+            <span className="text-lg opacity-80"> days</span>
           </div>
           <div className="text-sm opacity-90">{data.label}</div>
           <div className="text-xs opacity-75 mt-1 flex items-center gap-1">
             <Trophy className="w-3 h-3" />
-            Record: {data.best} jours
+            Best: {data.best} days
           </div>
           
           {/* Background decoration */}

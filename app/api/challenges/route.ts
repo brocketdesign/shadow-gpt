@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Non connecté' },
+        { success: false, message: 'Not authenticated' },
         { status: 401 }
       )
     }
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       case 'get': {
         if (!id) {
           return NextResponse.json(
-            { success: false, message: 'ID manquant' },
+            { success: false, message: 'ID required' },
             { status: 400 }
           )
         }
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
         
         if (!challenge) {
           return NextResponse.json(
-            { success: false, message: 'Challenge non trouvé' },
+            { success: false, message: 'Challenge not found' },
             { status: 404 }
           )
         }
@@ -141,14 +141,14 @@ export async function GET(request: NextRequest) {
       
       default:
         return NextResponse.json(
-          { success: false, message: 'Action non reconnue' },
+          { success: false, message: 'Unknown action' },
           { status: 400 }
         )
     }
   } catch (error) {
     console.error('Challenges GET error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, message: 'Server error' },
       { status: 500 }
     )
   }
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Non connecté' },
+        { success: false, message: 'Not authenticated' },
         { status: 401 }
       )
     }
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
         
         if (!title || !durationDays) {
           return NextResponse.json(
-            { success: false, message: 'Titre et durée requis' },
+            { success: false, message: 'Title and duration required' },
             { status: 400 }
           )
         }
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
         
         if (!challengeId || !date) {
           return NextResponse.json(
-            { success: false, message: 'Challenge ID et date requis' },
+            { success: false, message: 'Challenge ID and date required' },
             { status: 400 }
           )
         }
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
         
         if (!challenge) {
           return NextResponse.json(
-            { success: false, message: 'Challenge non trouvé' },
+            { success: false, message: 'Challenge not found' },
             { status: 404 }
           )
         }
@@ -268,7 +268,7 @@ export async function POST(request: NextRequest) {
         
         if (!challengeId) {
           return NextResponse.json(
-            { success: false, message: 'Challenge ID requis' },
+            { success: false, message: 'Challenge ID required' },
             { status: 400 }
           )
         }
@@ -285,7 +285,7 @@ export async function POST(request: NextRequest) {
         
         if (!challengeId || !status) {
           return NextResponse.json(
-            { success: false, message: 'Challenge ID et status requis' },
+            { success: false, message: 'Challenge ID and status required' },
             { status: 400 }
           )
         }
@@ -300,14 +300,14 @@ export async function POST(request: NextRequest) {
       
       default:
         return NextResponse.json(
-          { success: false, message: 'Action non reconnue' },
+          { success: false, message: 'Unknown action' },
           { status: 400 }
         )
     }
   } catch (error) {
     console.error('Challenges POST error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, message: 'Server error' },
       { status: 500 }
     )
   }

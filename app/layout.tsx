@@ -8,8 +8,8 @@ import { AuthProvider } from "@/components/providers/auth-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Zenith AI - Guide Personnel",
-  description: "Ton guide personnel pour la transformation - Track tes SAVERS, contrôle tes vices, atteins tes objectifs",
+  title: "Zenith AI - Personal Guide",
+  description: "Your personal guide for transformation - Track your SAVERS, control your vices, reach your goals",
   keywords: ["habit tracker", "SAVERS", "miracle morning", "personal development", "addiction recovery"],
   authors: [{ name: "Zenith AI" }],
   viewport: "width=device-width, initial-scale=1",
@@ -22,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="fr" suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning>
         <body className={`${inter.className} min-h-screen bg-gray-50`}>
           <AuthProvider>
             {children}

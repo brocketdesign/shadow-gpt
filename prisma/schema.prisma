@@ -30,6 +30,7 @@ model User {
   dailyTracking DailyTracking[]
   challenges    Challenge[]
   customTrackers CustomTracker[]
+  customProtocols CustomProtocol[]
 }
 
 model Session {
@@ -147,5 +148,35 @@ model CustomTrackerEntry {
   
   @@unique([trackerId, date])
   @@index([trackerId])
+  @@index([date])
+}
+
+model CustomProtocol {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  title     String
+  icon      String?  @default("✅")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries   CustomProtocolEntry[]
+  
+  @@unique([userId, title])
+  @@index([userId])
+}
+
+model CustomProtocolEntry {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  protocolId String   @db.ObjectId
+  date       DateTime
+  completed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  protocol   CustomProtocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  
+  @@unique([protocolId, date])
+  @@index([protocolId])
   @@index([date])
 }

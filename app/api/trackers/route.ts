@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Non connecté' },
+        { success: false, message: 'Not authenticated' },
         { status: 401 }
       )
     }
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       case 'get_entries': {
         if (!date) {
           return NextResponse.json(
-            { success: false, message: 'Date manquante' },
+            { success: false, message: 'Date required' },
             { status: 400 }
           )
         }
@@ -151,14 +151,14 @@ export async function GET(request: NextRequest) {
       
       default:
         return NextResponse.json(
-          { success: false, message: 'Action non reconnue' },
+          { success: false, message: 'Unknown action' },
           { status: 400 }
         )
     }
   } catch (error) {
     console.error('Trackers GET error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, message: 'Server error' },
       { status: 500 }
     )
   }
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Non connecté' },
+        { success: false, message: 'Not authenticated' },
         { status: 401 }
       )
     }
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         
         if (!title) {
           return NextResponse.json(
-            { success: false, message: 'Titre requis' },
+            { success: false, message: 'Title required' },
             { status: 400 }
           )
         }
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
         
         if (!trackerId || !date) {
           return NextResponse.json(
-            { success: false, message: 'Tracker ID et date requis' },
+            { success: false, message: 'Tracker ID and date required' },
             { status: 400 }
           )
         }
@@ -220,7 +220,7 @@ export async function POST(request: NextRequest) {
         
         if (!tracker) {
           return NextResponse.json(
-            { success: false, message: 'Tracker non trouvé' },
+            { success: false, message: 'Tracker not found' },
             { status: 404 }
           )
         }
@@ -256,7 +256,7 @@ export async function POST(request: NextRequest) {
         
         if (!entryId) {
           return NextResponse.json(
-            { success: false, message: 'Entry ID requis' },
+            { success: false, message: 'Entry ID required' },
             { status: 400 }
           )
         }
@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
         
         if (!entry || entry.tracker.userId !== user.id) {
           return NextResponse.json(
-            { success: false, message: 'Entrée non trouvée' },
+            { success: false, message: 'Entry not found' },
             { status: 404 }
           )
         }
@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
         
         if (!trackerId) {
           return NextResponse.json(
-            { success: false, message: 'Tracker ID requis' },
+            { success: false, message: 'Tracker ID required' },
             { status: 400 }
           )
         }
@@ -300,14 +300,14 @@ export async function POST(request: NextRequest) {
       
       default:
         return NextResponse.json(
-          { success: false, message: 'Action non reconnue' },
+          { success: false, message: 'Unknown action' },
           { status: 400 }
         )
     }
   } catch (error) {
     console.error('Trackers POST error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, message: 'Server error' },
       { status: 500 }
     )
   }

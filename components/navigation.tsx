@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { 
   Calendar, 
   Target, 
-  BarChart3, 
+  Wallet, 
   LogOut, 
   User, 
   Menu,
@@ -18,9 +18,9 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 
 const navLinks = [
-  { href: "/", label: "Calendrier", icon: Calendar },
+  { href: "/", label: "Calendar", icon: Calendar },
   { href: "/challenges", label: "Challenges", icon: Target },
-  { href: "/trackers", label: "Trackers", icon: BarChart3 },
+  { href: "/trackers", label: "Finances", icon: Wallet },
 ]
 
 export function Navigation() {
@@ -93,7 +93,7 @@ export function Navigation() {
             ) : (
               <Link href="/onboarding">
                 <Button variant="gradient" size="sm">
-                  Se connecter
+                  Sign In
                 </Button>
               </Link>
             )}

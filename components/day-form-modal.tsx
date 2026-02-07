@@ -6,10 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { Loader2, Sparkles, Check } from "lucide-react"
+import { Loader2, Sparkles, Check, CheckSquare } from "lucide-react"
 import { SAVERS_CONFIG, VICES_CONFIG } from "@/lib/types"
 import { cn } from "@/lib/utils"
+
+interface ProtocolEntry {
+  id: string
+  title: string
+  icon: string
+  completed: boolean
+}
 
 interface DayFormData {
   saversSilence: boolean
@@ -56,6 +62,7 @@ const defaultFormData: DayFormData = {
 
 export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalProps) {
   const [formData, setFormData] = useState<DayFormData>(defaultFormData)
+  const [protocols, setProtocols] = useState<ProtocolEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
@@ -63,8 +70,41 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
   useEffect(() => {
     if (open && date) {
       loadDayData()
+      loadProtocols()
     }
   }, [open, date])
+
+  const loadProtocols = async () => {
+    try {
+      const res = await fetch(`/api/protocols?action=get_day&date=${date}`)
+      const data = await res.json()
+      if (data.success) {
+        setProtocols(data.protocols || [])
+      }
+    } catch (error) {
+      console.error("Error loading protocols:", error)
+    }
+  }
+
+  const toggleProtocol = async (protocolId: string) => {
+    try {
+      const res = await fetch("/api/protocols", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "toggle", protocolId, date }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setProtocols((prev) =>
+          prev.map((p) =>
+            p.id === protocolId ? { ...p, completed: data.completed } : p
+          )
+        )
+      }
+    } catch (error) {
+      console.error("Error toggling protocol:", error)
+    }
+  }
 
   const loadDayData = async () => {
     setLoading(true)
@@ -119,8 +159,8 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
 
       if (data.success) {
         toast({
-          title: "Sauvegardé ! ✨",
-          description: "Ta journée a été enregistrée",
+          title: "Saved! ✨",
+          description: "Your day has been recorded",
           variant: "success",
         })
         onSave()
@@ -130,8 +170,8 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de sauvegarder",
+        title: "Error",
+        description: "Unable to save",
         variant: "destructive",
       })
     } finally {
@@ -154,7 +194,9 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
     ([_, config]) => formData[config.key as keyof DayFormData]
   ).length
 
-  const totalScore = saversCount + vicesCount
+  const protocolsCount = protocols.filter((p) => p.completed).length
+  const maxScore = 11 + protocols.length
+  const totalScore = saversCount + vicesCount + protocolsCount
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -162,7 +204,7 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-indigo-500" />
-            {format(new Date(date), "EEEE d MMMM yyyy", { locale: fr })}
+            {format(new Date(date), "EEEE, MMMM d, yyyy")}
           </DialogTitle>
         </DialogHeader>
 
@@ -177,11 +219,11 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
               <div className="text-center">
                 <div className={cn(
                   "text-4xl font-bold",
-                  totalScore >= 9 ? "text-green-600" : totalScore >= 6 ? "text-yellow-600" : "text-red-600"
+                  totalScore >= maxScore * 0.8 ? "text-green-600" : totalScore >= maxScore * 0.5 ? "text-yellow-600" : "text-red-600"
                 )}>
-                  {totalScore}/11
+                  {totalScore}/{maxScore}
                 </div>
-                <div className="text-sm text-gray-600">Score du jour</div>
+                <div className="text-sm text-gray-600">Daily Score</div>
               </div>
               <div className="h-12 w-px bg-gray-300" />
               <div className="text-center">
@@ -191,8 +233,17 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
               <div className="h-12 w-px bg-gray-300" />
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">{vicesCount}/5</div>
-                <div className="text-sm text-gray-600">Vices évités</div>
+                <div className="text-sm text-gray-600">Vices Avoided</div>
               </div>
+              {protocols.length > 0 && (
+                <>
+                  <div className="h-12 w-px bg-gray-300" />
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">{protocolsCount}/{protocols.length}</div>
+                    <div className="text-sm text-gray-600">Protocols</div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* SAVERS Section */}
@@ -229,8 +280,8 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
             <div className="space-y-3">
               <h3 className="font-semibold text-lg flex items-center gap-2">
                 <span className="text-green-600">🛡️</span>
-                Vices Évités
-                <span className="text-xs text-gray-500 font-normal">(Coche si tu as résisté)</span>
+                Vices Avoided
+                <span className="text-xs text-gray-500 font-normal">(Check if you resisted)</span>
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {Object.entries(VICES_CONFIG).map(([key, config]) => {
@@ -256,11 +307,40 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
               </div>
             </div>
 
+            {/* Custom Protocols Section */}
+            {protocols.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-purple-600" />
+                  Custom Protocols
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {protocols.map((protocol) => (
+                    <button
+                      key={protocol.id}
+                      type="button"
+                      onClick={() => toggleProtocol(protocol.id)}
+                      className={cn(
+                        "flex items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200",
+                        protocol.completed
+                          ? "border-purple-500 bg-purple-50 text-purple-700"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      )}
+                    >
+                      <span className="text-xl">{protocol.icon}</span>
+                      <span className="text-sm font-medium flex-1 text-left">{protocol.title}</span>
+                      {protocol.completed && <Check className="w-5 h-5 text-purple-500" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Mood & Energy */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <span>😊</span> Humeur
+                  <span>😊</span> Mood
                 </Label>
                 <div className="flex items-center gap-2">
                   <input
@@ -276,7 +356,7 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <span>⚡</span> Énergie
+                  <span>⚡</span> Energy
                 </Label>
                 <div className="flex items-center gap-2">
                   <input
@@ -295,13 +375,13 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
             {/* Notes */}
             <div className="space-y-2">
               <Label htmlFor="notes" className="flex items-center gap-2">
-                <span>📝</span> Notes du jour
+                <span>📝</span> Daily Notes
               </Label>
               <textarea
                 id="notes"
                 value={formData.notes}
                 onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                placeholder="Comment s'est passée ta journée ?"
+                placeholder="How was your day?"
                 className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none h-24"
               />
             </div>
@@ -314,7 +394,7 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
                 onClick={() => onOpenChange(false)}
                 className="flex-1"
               >
-                Annuler
+                Cancel
               </Button>
               <Button
                 type="submit"
@@ -325,12 +405,12 @@ export function DayFormModal({ open, onOpenChange, date, onSave }: DayFormModalP
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sauvegarde...
+                    Saving...
                   </>
                 ) : (
                   <>
                     <Check className="mr-2 h-4 w-4" />
-                    Enregistrer
+                    Save
                   </>
                 )}
               </Button>

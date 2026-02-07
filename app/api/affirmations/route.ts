@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Affirmations GET error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, message: 'Server error' },
       { status: 500 }
     )
   }

@@ -3,7 +3,6 @@
 import { useMemo } from "react"
 import { motion } from "framer-motion"
 import { format, isToday, isWeekend } from "date-fns"
-import { fr } from "date-fns/locale"
 import { getMonthDays, getFirstDayOfWeek, calculateScore, getScoreColor, cn } from "@/lib/utils"
 import { SAVERS_CONFIG, VICES_CONFIG, DailyTracking } from "@/lib/types"
 import { Lock } from "lucide-react"
@@ -14,11 +13,12 @@ interface CalendarProps {
   monthData: Record<string, DailyTracking>
   onDayClick: (date: string) => void
   isAuthenticated: boolean
+  protocolCount?: number
 }
 
-const WEEKDAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-export function Calendar({ year, month, monthData, onDayClick, isAuthenticated }: CalendarProps) {
+export function Calendar({ year, month, monthData, onDayClick, isAuthenticated, protocolCount = 0 }: CalendarProps) {
   const days = useMemo(() => getMonthDays(year, month), [year, month])
   const firstDayOffset = useMemo(() => getFirstDayOfWeek(year, month), [year, month])
 
@@ -112,19 +112,19 @@ export function Calendar({ year, month, monthData, onDayClick, isAuthenticated }
                       "absolute bottom-1 right-1 text-xs font-bold",
                       getScoreColor(score.total)
                     )}>
-                      {score.total}/11
+                      {score.total}/{11 + protocolCount}
                     </div>
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-16 text-gray-400 text-xs">
-                    <span>Cliquez</span>
-                    <span>pour tracker</span>
+                    <span>Click</span>
+                    <span>to track</span>
                   </div>
                 )
               ) : (
                 <div className="flex flex-col items-center justify-center h-16 text-gray-400">
                   <Lock className="w-4 h-4 mb-1" />
-                  <span className="text-xs">Connectez-vous</span>
+                  <span className="text-xs">Sign in</span>
                 </div>
               )}
             </motion.div>

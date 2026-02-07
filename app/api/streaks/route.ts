@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Non connecté' },
+        { success: false, message: 'Not authenticated' },
         { status: 401 }
       )
     }
@@ -88,19 +88,19 @@ export async function GET(request: NextRequest) {
     
     const streaks = {
       savers: {
-        silence: { ...calculateStreak('saversSilence'), label: 'Méditation', icon: '🧘' },
+        silence: { ...calculateStreak('saversSilence'), label: 'Meditation', icon: '🧘' },
         affirmations: { ...calculateStreak('saversAffirmations'), label: 'Affirmations', icon: '💬' },
-        visualization: { ...calculateStreak('saversVisualization'), label: 'Visualisation', icon: '👁️' },
+        visualization: { ...calculateStreak('saversVisualization'), label: 'Visualization', icon: '👁️' },
         exercise: { ...calculateStreak('saversExercise'), label: 'Exercise', icon: '🏃' },
-        reading: { ...calculateStreak('saversReading'), label: 'Lecture', icon: '📚' },
-        scribing: { ...calculateStreak('saversScribing'), label: 'Écriture', icon: '✍️' },
+        reading: { ...calculateStreak('saversReading'), label: 'Reading', icon: '📚' },
+        scribing: { ...calculateStreak('saversScribing'), label: 'Journaling', icon: '✍️' },
       },
       vices: {
-        coke: { ...calculateStreak('viceFreeCoke'), label: 'Sans Coca', icon: '🥤' },
-        beer: { ...calculateStreak('viceFreeBeer'), label: 'Sans Alcool', icon: '🍺' },
-        weed: { ...calculateStreak('viceFreeWeed'), label: 'Sans Cannabis', icon: '🌿' },
-        sns: { ...calculateStreak('viceFreeSns'), label: 'Sans SNS', icon: '📱' },
-        porn: { ...calculateStreak('viceFreePorn'), label: 'Sans Porno', icon: '🔞' },
+        coke: { ...calculateStreak('viceFreeCoke'), label: 'Soda Free', icon: '🥤' },
+        beer: { ...calculateStreak('viceFreeBeer'), label: 'Alcohol Free', icon: '🍺' },
+        weed: { ...calculateStreak('viceFreeWeed'), label: 'Cannabis Free', icon: '🌿' },
+        sns: { ...calculateStreak('viceFreeSns'), label: 'SNS Free', icon: '📱' },
+        porn: { ...calculateStreak('viceFreePorn'), label: 'Porn Free', icon: '🔞' },
       },
     }
     
@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
           'saversReading',
           'saversScribing',
         ]),
-        label: 'SAVERS Complet',
+        label: 'All SAVERS',
         icon: '🌟',
       },
       allVices: {
@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
           'viceFreeSns',
           'viceFreePorn',
         ]),
-        label: 'Zéro Vice',
+        label: 'Zero Vices',
         icon: '🛡️',
       },
       perfectDay: {
@@ -193,7 +193,7 @@ export async function GET(request: NextRequest) {
           'viceFreeSns',
           'viceFreePorn',
         ]),
-        label: 'Jour Parfait',
+        label: 'Perfect Day',
         icon: '👑',
       },
     }
@@ -206,7 +206,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Streaks GET error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, message: 'Server error' },
       { status: 500 }
     )
   }

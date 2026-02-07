@@ -50,11 +50,11 @@ async function generateAffirmation(): Promise<string> {
       messages: [
         {
           role: 'system',
-          content: 'Tu es un coach de vie bienveillant mais direct qui aide les gens à surmonter leurs addictions et construire une vie disciplinée.',
+          content: 'You are a kind but direct life coach who helps people overcome their addictions and build a disciplined life.',
         },
         {
           role: 'user',
-          content: "Génère une affirmation puissante et motivante en français pour quelqu'un qui lutte contre des addictions et qui veut construire une vie disciplinée et libre. L'affirmation doit être directe, respectueuse, et inspirante. Maximum 150 caractères.",
+          content: "Generate a powerful and motivating affirmation in English for someone struggling with addictions who wants to build a disciplined and free life. The affirmation should be direct, respectful, and inspiring. Maximum 150 characters.",
         },
       ],
       max_tokens: 100,
@@ -70,7 +70,7 @@ async function generateAffirmation(): Promise<string> {
 
 export async function enhanceDescription(title: string, description: string): Promise<string> {
   if (!openai) {
-    return description || `Challenge de transformation personnelle: ${title}. Chaque jour compte, chaque effort te rapproche de la meilleure version de toi-même.`
+    return description || `Personal transformation challenge: ${title}. Every day counts, every effort brings you closer to the best version of yourself.`
   }
   
   try {
@@ -79,11 +79,11 @@ export async function enhanceDescription(title: string, description: string): Pr
       messages: [
         {
           role: 'system',
-          content: 'Tu es un coach de vie bienveillant qui aide les gens à atteindre leurs objectifs personnels.',
+          content: 'You are a kind life coach who helps people achieve their personal goals.',
         },
         {
           role: 'user',
-          content: `Améliore et enrichis cette description de challenge personnel pour la rendre plus motivante et inspirante.\n\nTitre du challenge: ${title}\nDescription actuelle: ${description || 'Aucune description fournie'}\n\nRéponds uniquement avec la description améliorée, sans préambule ni explication.`,
+          content: `Enhance and enrich this personal challenge description to make it more motivating and inspiring.\n\nChallenge title: ${title}\nCurrent description: ${description || 'No description provided'}\n\nRespond only with the enhanced description, no preamble or explanation.`,
         },
       ],
       max_tokens: 300,

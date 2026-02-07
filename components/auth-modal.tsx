@@ -49,8 +49,8 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
         toast({
-          title: "Connexion réussie !",
-          description: "Bienvenue sur Zenith AI 🎉",
+          title: "Signed in!",
+          description: "Welcome to Zenith AI 🎉",
           variant: "success",
         })
         onOpenChange(false)
@@ -60,7 +60,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       }
     } catch (err: unknown) {
       const clerkError = err as { errors?: { message: string; longMessage?: string }[] }
-      const message = clerkError.errors?.[0]?.longMessage || clerkError.errors?.[0]?.message || "Erreur de connexion"
+      const message = clerkError.errors?.[0]?.longMessage || clerkError.errors?.[0]?.message || "Sign-in error"
       setError(message)
     } finally {
       setLoading(false)
@@ -75,10 +75,10 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <DialogTitle className="text-center text-2xl">
-            Bon retour !
+            Welcome back!
           </DialogTitle>
           <DialogDescription className="text-center">
-            Connecte-toi pour continuer ta transformation
+            Sign in to continue your transformation
           </DialogDescription>
         </DialogHeader>
 
@@ -90,7 +90,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
               <Input
                 id="email"
                 type="email"
-                placeholder="ton@email.com"
+                placeholder="you@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
@@ -100,7 +100,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
@@ -130,22 +130,22 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Chargement...
+                Loading...
               </>
             ) : (
-              "Se connecter"
+              "Sign In"
             )}
           </Button>
         </form>
 
         <div className="mt-4 text-center text-sm text-gray-600">
-          Pas encore de compte ?{" "}
+          Don&apos;t have an account?{" "}
           <button
             type="button"
             onClick={() => { onOpenChange(false); router.push("/onboarding") }}
             className="text-indigo-600 font-semibold hover:underline"
           >
-            Commence ici
+            Start here
           </button>
         </div>
       </DialogContent>

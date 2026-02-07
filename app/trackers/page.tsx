@@ -25,8 +25,7 @@ import {
   Printer
 } from "lucide-react"
 import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { getMonthNameFr, cn, generateRandomColor } from "@/lib/utils"
+import { getMonthName, cn, generateRandomColor } from "@/lib/utils"
 
 interface TrackerTotal {
   trackerId: string
@@ -177,7 +176,7 @@ export default function TrackersPage() {
 
       if (data.success) {
         toast({
-          title: "Tracker créé ! 📊",
+          title: "Tracker created! 📊",
           variant: "success",
         })
         setShowCreateModal(false)
@@ -189,8 +188,8 @@ export default function TrackersPage() {
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de créer le tracker",
+        title: "Error",
+        description: "Unable to create tracker",
         variant: "destructive",
       })
     } finally {
@@ -218,7 +217,7 @@ export default function TrackersPage() {
 
       if (data.success) {
         toast({
-          title: "Entrée ajoutée ! ✅",
+          title: "Entry added! ✅",
           variant: "success",
         })
         setShowAddEntryModal(false)
@@ -233,8 +232,8 @@ export default function TrackersPage() {
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter l'entrée",
+        title: "Error",
+        description: "Unable to add entry",
         variant: "destructive",
       })
     } finally {
@@ -243,7 +242,7 @@ export default function TrackersPage() {
   }
 
   const handleDeleteEntry = async (entryId: string) => {
-    if (!confirm("Supprimer cette entrée ?")) return
+    if (!confirm("Delete this entry?")) return
 
     try {
       const res = await fetch("/api/trackers", {
@@ -258,13 +257,13 @@ export default function TrackersPage() {
       const data = await res.json()
 
       if (data.success) {
-        toast({ title: "Entrée supprimée", variant: "default" })
+        toast({ title: "Entry deleted", variant: "default" })
         loadDashboardData()
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de supprimer",
+        title: "Error",
+        description: "Unable to delete",
         variant: "destructive",
       })
     }
@@ -294,7 +293,7 @@ export default function TrackersPage() {
           <div className="relative">
             <h1 className="text-3xl font-bold mb-4 text-center flex items-center justify-center gap-3">
               <BarChart3 className="w-8 h-8" />
-              Dashboard Trackers Personnalisés
+              Finances Dashboard
             </h1>
             
             {/* Month Navigation */}
@@ -308,7 +307,7 @@ export default function TrackersPage() {
                 <ChevronLeft className="w-6 h-6" />
               </Button>
               <h2 className="text-2xl font-semibold min-w-[200px] text-center">
-                {getMonthNameFr(currentMonth)} {currentYear}
+                {getMonthName(currentMonth)} {currentYear}
               </h2>
               <Button
                 variant="ghost"
@@ -330,9 +329,9 @@ export default function TrackersPage() {
                 <Wallet className="w-6 h-6 text-teal-600" />
               </div>
               <div className="text-3xl font-bold text-teal-600">
-                {loading ? "--" : `${stats?.totalAmount.toFixed(2) || 0} €`}
+                {loading ? "--" : `$${stats?.totalAmount.toFixed(2) || 0}`}
               </div>
-              <div className="text-gray-600 mt-1">💰 Total du mois</div>
+              <div className="text-gray-600 mt-1">💰 Monthly Total</div>
             </CardContent>
           </Card>
           <Card>
@@ -343,7 +342,7 @@ export default function TrackersPage() {
               <div className="text-3xl font-bold text-blue-600">
                 {loading ? "--" : stats?.daysWithEntries || 0}
               </div>
-              <div className="text-gray-600 mt-1">📅 Jours avec entrées</div>
+              <div className="text-gray-600 mt-1">📅 Days with Entries</div>
             </CardContent>
           </Card>
           <Card>
@@ -354,7 +353,7 @@ export default function TrackersPage() {
               <div className="text-3xl font-bold text-purple-600">
                 {loading ? "--" : stats?.totalEntries || 0}
               </div>
-              <div className="text-gray-600 mt-1">📝 Nombre d'entrées</div>
+              <div className="text-gray-600 mt-1">📝 Total Entries</div>
             </CardContent>
           </Card>
         </div>
@@ -363,15 +362,15 @@ export default function TrackersPage() {
         <div className="flex flex-wrap gap-3 mb-8">
           <Button variant="gradient" onClick={() => setShowCreateModal(true)}>
             <Plus className="w-5 h-5 mr-2" />
-            Nouveau Tracker
+            New Tracker
           </Button>
           <Button variant="outline" onClick={() => setShowAddEntryModal(true)} disabled={trackers.length === 0}>
             <DollarSign className="w-5 h-5 mr-2" />
-            Ajouter une Entrée
+            Add Entry
           </Button>
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="w-5 h-5 mr-2" />
-            Imprimer
+            Print
           </Button>
         </div>
 
@@ -380,7 +379,7 @@ export default function TrackersPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
-              Totaux par Tracker
+              Totals by Tracker
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -391,7 +390,7 @@ export default function TrackersPage() {
               </div>
             ) : totals.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
-                Aucun tracker créé. Commence par créer ton premier tracker !
+                No trackers created yet. Start by creating your first tracker!
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -405,7 +404,7 @@ export default function TrackersPage() {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-800">{tracker.title}</div>
                       <div className="text-2xl font-bold" style={{ color: tracker.color }}>
-                        {tracker.total.toFixed(2)} €
+                        {tracker.total.toFixed(2)} $
                       </div>
                     </div>
                   </div>
@@ -421,14 +420,14 @@ export default function TrackersPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <CardTitle className="flex items-center gap-2">
                 <ListChecks className="w-5 h-5" />
-                Détail des Entrées
+                Entry Details
               </CardTitle>
               <select
                 value={filterTracker}
                 onChange={(e) => setFilterTracker(e.target.value)}
                 className="px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500"
               >
-                <option value="">Tous les trackers</option>
+                <option value="">All trackers</option>
                 {trackers.map((t) => (
                   <option key={t.id} value={t.title}>{t.icon} {t.title}</option>
                 ))}
@@ -444,7 +443,7 @@ export default function TrackersPage() {
               </div>
             ) : filteredEntries.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
-                Aucune entrée pour ce mois. Ajoute des entrées depuis le formulaire !
+                No entries for this month. Add entries from the form!
               </p>
             ) : (
               <div className="overflow-x-auto">
@@ -453,7 +452,7 @@ export default function TrackersPage() {
                     <tr className="bg-gray-50">
                       <th className="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
                       <th className="px-4 py-3 text-left font-semibold text-gray-700">Tracker</th>
-                      <th className="px-4 py-3 text-right font-semibold text-gray-700">Montant</th>
+                      <th className="px-4 py-3 text-right font-semibold text-gray-700">Amount</th>
                       <th className="px-4 py-3 text-center font-semibold text-gray-700 print:hidden">Actions</th>
                     </tr>
                   </thead>
@@ -461,7 +460,7 @@ export default function TrackersPage() {
                     {filteredEntries.map((entry) => (
                       <tr key={entry.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3">
-                          {format(new Date(entry.date), "d MMMM yyyy", { locale: fr })}
+                          {format(new Date(entry.date), "MMMM d, yyyy")}
                         </td>
                         <td className="px-4 py-3">
                           <span className="inline-flex items-center gap-2">
@@ -470,7 +469,7 @@ export default function TrackersPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right font-semibold">
-                          {entry.amount.toFixed(2)} €
+                          ${entry.amount.toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-center print:hidden">
                           <Button
@@ -498,25 +497,25 @@ export default function TrackersPage() {
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-teal-500" />
-              Nouveau Tracker
+              New Tracker
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleCreateTracker} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="trackerTitle">Nom du tracker *</Label>
+              <Label htmlFor="trackerTitle">Tracker Name *</Label>
               <Input
                 id="trackerTitle"
                 value={createForm.title}
                 onChange={(e) => setCreateForm((p) => ({ ...p, title: e.target.value }))}
-                placeholder="Ex: Dépenses Café, Transport..."
+                placeholder="E.g., Coffee Spending, Transport..."
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="trackerIcon">Icône</Label>
+                <Label htmlFor="trackerIcon">Icon</Label>
                 <Input
                   id="trackerIcon"
                   value={createForm.icon}
@@ -525,7 +524,7 @@ export default function TrackersPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="trackerColor">Couleur</Label>
+                <Label htmlFor="trackerColor">Color</Label>
                 <Input
                   id="trackerColor"
                   type="color"
@@ -543,11 +542,11 @@ export default function TrackersPage() {
                 onClick={() => setShowCreateModal(false)}
                 className="flex-1"
               >
-                Annuler
+                Cancel
               </Button>
               <Button type="submit" variant="gradient" className="flex-1" disabled={creating}>
                 {creating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-                Créer
+                Create
               </Button>
             </div>
           </form>
@@ -560,7 +559,7 @@ export default function TrackersPage() {
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
               <DollarSign className="w-6 h-6 text-teal-500" />
-              Ajouter une Entrée
+              Add Entry
             </DialogTitle>
           </DialogHeader>
 
@@ -574,7 +573,7 @@ export default function TrackersPage() {
                 className="w-full p-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500"
                 required
               >
-                <option value="">Sélectionner un tracker</option>
+                <option value="">Select a tracker</option>
                 {trackers.map((t) => (
                   <option key={t.id} value={t.id}>{t.icon} {t.title}</option>
                 ))}
@@ -593,7 +592,7 @@ export default function TrackersPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="entryAmount">Montant (€) *</Label>
+                <Label htmlFor="entryAmount">Amount ($) *</Label>
                 <Input
                   id="entryAmount"
                   type="number"
@@ -613,11 +612,11 @@ export default function TrackersPage() {
                 onClick={() => setShowAddEntryModal(false)}
                 className="flex-1"
               >
-                Annuler
+                Cancel
               </Button>
               <Button type="submit" variant="gradient" className="flex-1" disabled={addingEntry}>
                 {addingEntry ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-                Ajouter
+                Add
               </Button>
             </div>
           </form>
