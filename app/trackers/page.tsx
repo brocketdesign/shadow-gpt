@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
-import { 
-  Plus, 
+import {
+  Plus,
   BarChart3,
   Wallet,
   Calendar,
@@ -60,20 +60,20 @@ export default function TrackersPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
-  
+
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1)
-  
+
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [totals, setTotals] = useState<TrackerTotal[]>([])
   const [entries, setEntries] = useState<TrackerEntry[]>([])
   const [trackers, setTrackers] = useState<Tracker[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showAddEntryModal, setShowAddEntryModal] = useState(false)
   const [filterTracker, setFilterTracker] = useState("")
-  
+
   const [createForm, setCreateForm] = useState({
     title: "",
     icon: "📊",
@@ -89,12 +89,12 @@ export default function TrackersPage() {
 
   const loadDashboardData = useCallback(async () => {
     if (!user) return
-    
+
     setLoading(true)
     try {
       const res = await fetch(`/api/trackers?action=dashboard&year=${currentYear}&month=${currentMonth}`)
       const data = await res.json()
-      
+
       if (data.success) {
         setStats(data.stats)
         setTotals(data.totals)
@@ -109,11 +109,11 @@ export default function TrackersPage() {
 
   const loadTrackers = useCallback(async () => {
     if (!user) return
-    
+
     try {
       const res = await fetch(`/api/trackers?action=list&year=${currentYear}&month=${currentMonth}`)
       const data = await res.json()
-      
+
       if (data.success) {
         setTrackers(data.trackers.map((t: Tracker) => ({
           id: t.id,
@@ -269,6 +269,37 @@ export default function TrackersPage() {
     }
   }
 
+  const handleDeleteTracker = async (trackerId: string) => {
+    if (!confirm("Delete this tracker? All associated entries will also be permanently deleted.")) return
+
+    try {
+      const res = await fetch("/api/trackers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete_tracker",
+          trackerId,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        toast({ title: "Tracker deleted", variant: "default" })
+        loadDashboardData()
+        loadTrackers()
+      } else {
+        throw new Error(data.message)
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Unable to delete tracker",
+        variant: "destructive",
+      })
+    }
+  }
+
   const filteredEntries = filterTracker
     ? entries.filter((e) => e.trackerTitle === filterTracker)
     : entries
@@ -284,18 +315,18 @@ export default function TrackersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navigation />
-      
+
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="gradient-bg-teal text-white p-8 rounded-3xl mb-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          
+
           <div className="relative">
             <h1 className="text-3xl font-bold mb-4 text-center flex items-center justify-center gap-3">
               <BarChart3 className="w-8 h-8" />
               Finances Dashboard
             </h1>
-            
+
             {/* Month Navigation */}
             <div className="flex items-center justify-center gap-4 mb-4">
               <Button
@@ -397,7 +428,7 @@ export default function TrackersPage() {
                 {totals.map((tracker) => (
                   <div
                     key={tracker.trackerId}
-                    className="flex items-center gap-4 p-4 rounded-xl border"
+                    className="flex items-center gap-4 p-4 rounded-xl border relative group"
                     style={{ borderColor: tracker.color + "40", backgroundColor: tracker.color + "10" }}
                   >
                     <span className="text-3xl">{tracker.icon}</span>
@@ -407,6 +438,14 @@ export default function TrackersPage() {
                         {tracker.total.toFixed(2)} $
                       </div>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => handleDeleteTracker(tracker.trackerId)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 ))}
               </div>
