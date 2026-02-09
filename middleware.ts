@@ -19,11 +19,6 @@ export default clerkMiddleware(async (auth, request) => {
     return NextResponse.redirect(new URL('/onboarding', request.url))
   }
 
-  // If user is already logged in and visits /onboarding, redirect to dashboard
-  if (request.nextUrl.pathname.startsWith('/onboarding') && userId) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-
   if (!isPublicRoute(request)) {
     await auth.protect()
   }

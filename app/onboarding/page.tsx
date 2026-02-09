@@ -30,7 +30,7 @@ export default function OnboardingPage() {
   }, [authLoading, isSignedIn, dbUser, router])
 
   // While checking auth status, show loader
-  if (authLoading || (clerkLoaded && isSignedIn && !dbUser)) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
