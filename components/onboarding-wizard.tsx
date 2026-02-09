@@ -339,7 +339,7 @@ export function OnboardingWizard() {
                   onClick={goNext}
                   className="text-lg px-8 py-6"
                 >
-                  Start Initialization
+                  {isSignedIn ? "Finish Setting Up Your Profile" : "Start Initialization"}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
 
@@ -675,7 +675,32 @@ export function OnboardingWizard() {
                   </p>
                 </div>
 
-                {!pendingVerification ? (
+                {isSignedIn ? (
+                    <div className="space-y-4">
+                      <p className="text-center text-lg text-gray-700">
+                        You are already signed in. Click below to activate your protocol.
+                      </p>
+                      <Button
+                        variant="gradient"
+                        size="lg"
+                        onClick={handleCreateAccount}
+                        disabled={loading}
+                        className="w-full text-lg py-6"
+                      >
+                         {loading ? (
+                          <>
+                            <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                            Activating...
+                          </>
+                        ) : (
+                          <>
+                            Activate Protocol
+                            <ArrowRight className="ml-2 w-5 h-5" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  ) : !pendingVerification ? (
                   /* Email + Password form */
                   <div className="space-y-4">
                     <div>
@@ -745,31 +770,6 @@ export function OnboardingWizard() {
                     <p className="text-xs text-center text-gray-400">
                       By creating an account, you agree to our terms of service and privacy policy.
                     </p>
-                  </div>
-                ) : isSignedIn ? (
-                  <div className="space-y-4">
-                    <p className="text-center text-lg text-gray-700">
-                      You are already signed in. Click below to activate your protocol.
-                    </p>
-                    <Button
-                      variant="gradient"
-                      size="lg"
-                      onClick={handleCreateAccount}
-                      disabled={loading}
-                      className="w-full text-lg py-6"
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                          Activating...
-                        </>
-                      ) : (
-                        <>
-                          Activate Protocol
-                          <ArrowRight className="ml-2 w-5 h-5" />
-                        </>
-                      )}
-                    </Button>
                   </div>
                 ) : (
                   /* Email verification form */
