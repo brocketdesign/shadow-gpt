@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { absoluteUrl } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 const settingsUrl = absoluteUrl("/settings");
 
 export async function GET() {
