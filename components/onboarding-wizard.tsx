@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSignUp, useSignIn, SignInButton, useUser } from "@clerk/nextjs"
+import { useAuth } from "@/components/providers/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
@@ -32,6 +33,7 @@ const TOTAL_STEPS = 7
 export function OnboardingWizard() {
   const router = useRouter()
   const { toast } = useToast()
+  const { refreshUser } = useAuth()
   const { isLoaded: signUpLoaded, signUp, setActive: setSignUpActive } = useSignUp()
   const { isLoaded: signInLoaded, signIn, setActive: setSignInActive } = useSignIn()
   const { isSignedIn } = useUser()
@@ -110,6 +112,62 @@ export function OnboardingWizard() {
   }
 
   /**
+   * Save onboarding data to the database after successful account creation.
+   */
+  const saveOnboardingData = useCallback(async () => {
+    const parsedAge = parseInt(age, 10)
+
+    // Debug logging
+    console.log("[Onboarding] Saving data:", {
+      name: name.trim(),
+      age: parsedAge,
+      disciplineLevel,
+      painPoints,
+      painPointsOther: painPointsOther.trim() || undefined,
+      vision,
+      visionCustom: visionCustom.trim() || undefined,
+      pactText: pactText.substring(0, 50) + "...",
+    })
+
+    try {
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          age: parsedAge,
+          disciplineLevel,
+          painPoints,
+          painPointsOther: painPointsOther.trim() || undefined,
+          vision,
+          visionCustom: visionCustom.trim() || undefined,
+          pactText,
+        }),
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        setGeneratedContent(data.generatedContent)
+        setStep(6)
+      } else {
+        console.error("[Onboarding] API error:", data)
+        toast({
+          title: "Error",
+          description: data.message || "Something went wrong saving your profile",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("[Onboarding] Network error:", error)
+      toast({
+        title: "Error",
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }, [name, age, disciplineLevel, painPoints, painPointsOther, vision, visionCustom, pactText, toast])
+
+  /**
    * After the pact is signed, create the Clerk account and then
    * save the onboarding data to the database.
    */
@@ -156,7 +214,7 @@ export function OnboardingWizard() {
     } finally {
       setLoading(false)
     }
-  }, [signUpLoaded, signUp, setSignUpActive, email, password, name])
+  }, [signUpLoaded, signUp, setSignUpActive, email, password, name, isSignedIn, saveOnboardingData])
 
   /**
    * Handle email verification code submission
@@ -186,52 +244,11 @@ export function OnboardingWizard() {
     } finally {
       setLoading(false)
     }
-  }, [signUpLoaded, signUp, setSignUpActive, verificationCode])
-
-  /**
-   * Save onboarding data to the database after successful account creation.
-   */
-  const saveOnboardingData = useCallback(async () => {
-    const parsedAge = parseInt(age, 10)
-
-    try {
-      const res = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          age: parsedAge,
-          disciplineLevel,
-          painPoints,
-          painPointsOther: painPointsOther.trim() || undefined,
-          vision,
-          visionCustom: visionCustom.trim() || undefined,
-          pactText,
-        }),
-      })
-      const data = await res.json()
-
-      if (data.success) {
-        setGeneratedContent(data.generatedContent)
-        setStep(6)
-      } else {
-        toast({
-          title: "Error",
-          description: data.message || "Something went wrong saving your profile",
-          variant: "destructive",
-        })
-      }
-    } catch {
-      toast({
-        title: "Error",
-        description: "Network error. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }, [name, age, disciplineLevel, painPoints, painPointsOther, vision, visionCustom, pactText, toast])
+  }, [signUpLoaded, signUp, setSignUpActive, verificationCode, saveOnboardingData])
 
   // Hold-to-sign logic — after signing, go to account creation step
   const startHold = useCallback(() => {
+    console.log("[Onboarding] startHold called, current step:", step, { name, age, disciplineLevel, painPoints, vision })
     holdStartRef.current = Date.now()
     const animate = () => {
       const elapsed = Date.now() - holdStartRef.current
@@ -239,13 +256,14 @@ export function OnboardingWizard() {
       setHoldProgress(progress)
       if (progress >= 100) {
         // Pact signed — go to account creation step
+        console.log("[Onboarding] Hold complete, going to step 5 with data:", { name, age, disciplineLevel, painPoints, vision })
         setStep(5)
         return
       }
       animFrameRef.current = requestAnimationFrame(animate)
     }
     animFrameRef.current = requestAnimationFrame(animate)
-  }, [])
+  }, [step, name, age, disciplineLevel, painPoints, vision])
 
   const endHold = useCallback(() => {
     if (holdTimerRef.current) {
@@ -265,9 +283,17 @@ export function OnboardingWizard() {
     }
   }, [])
 
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log(`[Onboarding] State update - Step ${step}:`, { name, age, disciplineLevel, painPoints, vision, isSignedIn })
+  }, [step, name, age, disciplineLevel, painPoints, vision, isSignedIn])
+
   const goNext = () => {
     if (step < TOTAL_STEPS - 1 && canProceed()) {
+      console.log(`[Onboarding] Going from step ${step} to ${step + 1}`, { name, age, disciplineLevel, painPoints, vision })
       setStep(s => s + 1)
+    } else {
+      console.log(`[Onboarding] Cannot proceed from step ${step}`, { name, age, disciplineLevel, painPoints, vision })
     }
   }
 
@@ -283,8 +309,15 @@ export function OnboardingWizard() {
     }
   }
 
-  const goToDashboard = () => {
-    router.push("/")
+  const goToDashboard = async () => {
+    setLoading(true)
+    // Refresh user data before redirecting to ensure AuthProvider has the latest user
+    await refreshUser()
+    // Small delay to ensure state is updated
+    setTimeout(() => {
+      setLoading(false)
+      router.push("/")
+    }, 100)
   }
 
   const slideVariants = {

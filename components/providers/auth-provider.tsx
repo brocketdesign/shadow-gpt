@@ -21,22 +21,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const refreshUser = useCallback(async () => {
+    console.log("[AuthProvider] refreshUser called, clerkUser:", clerkUser?.id)
     if (!clerkUser) {
+      console.log("[AuthProvider] No clerk user, clearing DB user")
       setDbUser(null)
       setLoading(false)
       return
     }
 
     try {
+      console.log("[AuthProvider] Fetching /api/auth...")
       const res = await fetch("/api/auth")
       const data = await res.json()
+      console.log("[AuthProvider] API response:", { authenticated: data.authenticated, hasUser: !!data.user })
       if (data.authenticated && data.user) {
+        console.log("[AuthProvider] Setting DB user, onboardingCompleted:", data.user.onboardingCompleted)
         setDbUser(data.user)
       } else {
+        console.log("[AuthProvider] No DB user found")
         setDbUser(null)
       }
     } catch (error) {
-      console.error("Error refreshing user:", error)
+      console.error("[AuthProvider] Error refreshing user:", error)
       setDbUser(null)
     } finally {
       setLoading(false)

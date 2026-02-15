@@ -27,11 +27,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, age, disciplineLevel, painPoints, painPointsOther, vision, visionCustom, pactText } = body
 
-    if (!name || !age || !disciplineLevel || !painPoints?.length || !vision?.length || !pactText) {
-      return NextResponse.json(
-        { success: false, message: 'All fields are required' },
-        { status: 400 }
-      )
+    // Validate required fields with specific error messages
+    if (!name) {
+      return NextResponse.json({ success: false, message: 'Name is required' }, { status: 400 })
+    }
+    if (!age) {
+      return NextResponse.json({ success: false, message: 'Age is required' }, { status: 400 })
+    }
+    if (!disciplineLevel) {
+      return NextResponse.json({ success: false, message: 'Discipline level is required' }, { status: 400 })
+    }
+    if (!painPoints?.length) {
+      return NextResponse.json({ success: false, message: 'At least one pain point is required' }, { status: 400 })
+    }
+    if (!vision?.length) {
+      return NextResponse.json({ success: false, message: 'At least one vision is required' }, { status: 400 })
+    }
+    if (!pactText) {
+      return NextResponse.json({ success: false, message: 'Pact text is required' }, { status: 400 })
     }
 
     const parsedAge = typeof age === 'number' ? age : parseInt(age, 10)
@@ -157,9 +170,14 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Onboarding API error:', error)
+    console.error('[Onboarding API] Full error:', error)
+    console.error('[Onboarding API] Error message:', (error as Error).message)
+    console.error('[Onboarding API] Error stack:', (error as Error).stack)
+    
+    // Return more detailed error for debugging
+    const errorMessage = (error as Error).message || 'Server error'
     return NextResponse.json(
-      { success: false, message: 'Server error' },
+      { success: false, message: errorMessage, details: String(error) },
       { status: 500 }
     )
   }

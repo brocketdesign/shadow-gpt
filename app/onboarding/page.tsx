@@ -22,11 +22,19 @@ export default function OnboardingPage() {
   }, [clerkLoaded, isSignedIn, refreshUser])
 
   useEffect(() => {
-    // If auth is done loading and user is signed in with completed onboarding,
-    // redirect to dashboard
+    console.log("[Onboarding] Auth state:", { authLoading, isSignedIn, hasDbUser: !!dbUser, onboardingCompleted: dbUser?.onboardingCompleted })
+    // Redirect to dashboard if:
+    // - Auth is done loading
+    // - User is signed in via Clerk
+    // - We have a DB user record with completed onboarding
     if (!authLoading && isSignedIn && dbUser?.onboardingCompleted) {
+      console.log("[Onboarding] User completed onboarding, redirecting to dashboard")
       router.push("/")
     }
+    // Otherwise stay on onboarding:
+    // - Not signed in → complete onboarding to create account
+    // - Signed in but no DB record → complete onboarding to create DB record
+    // - Signed in with DB record but onboarding not completed → finish onboarding
   }, [authLoading, isSignedIn, dbUser, router])
 
   // While checking auth status, show loader

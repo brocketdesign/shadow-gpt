@@ -156,12 +156,7 @@ export default function Home() {
     }
   }, [authLoading, user, loadProtocols])
 
-  // Redirect to onboarding if user is not logged in
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/onboarding")
-    }
-  }, [authLoading, user, router])
+
 
   const goToPreviousMonth = () => {
     if (currentMonth === 1) {
@@ -188,12 +183,25 @@ export default function Home() {
     setSelectedDate(date)
   }
 
-  if (authLoading || !user) {
+  // Redirect to onboarding if not authenticated or no DB user
+  useEffect(() => {
+    console.log("[Dashboard] Auth state:", { authLoading, hasUser: !!user })
+    if (!authLoading && !user) {
+      console.log("[Dashboard] No user found, redirecting to onboarding")
+      router.push("/onboarding")
+    }
+  }, [authLoading, user, router])
+
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
       </div>
     )
+  }
+
+  if (!user) {
+    return null // Will redirect via useEffect above
   }
 
   return (
