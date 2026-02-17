@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { BookOpen, Key, ArrowRight, Code, Lock, Zap, Clock } from "lucide-react"
+import { CopyDocsButton } from "@/components/copy-docs-button"
 
 function MethodBadge({ method }: { method: string }) {
   const colors: Record<string, string> = {
@@ -128,6 +129,7 @@ export default function DocsPage() {
               Get API Keys
               <ArrowRight className="w-4 h-4" />
             </Link>
+            <CopyDocsButton />
           </div>
         </div>
       </div>
