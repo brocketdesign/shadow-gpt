@@ -394,37 +394,114 @@ export default function DocsPage() {
           </div>
         </section>
 
-        {/* Calendar - Coming Soon */}
+        {/* Calendar / Daily Tracking */}
         <section id="calendar">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">📅 Calendar / Daily Tracking</h2>
-          <Card className="border-2 border-dashed border-amber-300 bg-amber-50/50">
-            <CardContent className="pt-6">
-              <div className="text-center py-6">
-                <Clock className="w-12 h-12 mx-auto text-amber-500 mb-3" />
-                <h3 className="text-xl font-bold text-amber-800 mb-2">Coming Soon</h3>
-                <p className="text-amber-700 max-w-md mx-auto">
-                  The Calendar API will allow you to programmatically log your daily SAVERS protocol, vice tracking, mood, energy levels, and notes. Check back for updates.
-                </p>
-                <div className="mt-6 space-y-2 text-left max-w-md mx-auto">
-                  <div className="flex items-center gap-3 text-sm text-amber-700">
-                    <MethodBadge method="GET" />
-                    <code className="font-mono text-xs">/api/v1/calendar</code>
-                    <span className="text-xs">— Get daily tracking data</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-amber-700">
-                    <MethodBadge method="POST" />
-                    <code className="font-mono text-xs">/api/v1/calendar</code>
-                    <span className="text-xs">— Log a daily entry</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-amber-700">
-                    <MethodBadge method="GET" />
-                    <code className="font-mono text-xs">/api/v1/calendar/streaks</code>
-                    <span className="text-xs">— Get streak data</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <p className="text-gray-600 mb-6">
+            Log your daily SAVERS protocol, vice tracking, mood, energy levels, notes, and view streaks.
+          </p>
+          <div className="space-y-4">
+            <EndpointCard
+              method="GET"
+              path="/api/v1/calendar"
+              description="Get daily tracking data. Pass a single date to get one day, or year/month for the full month."
+              queryParams={[
+                { name: "date", type: "string", required: false, description: "Single date YYYY-MM-DD (returns one day)" },
+                { name: "year", type: "number", required: false, description: "Year (defaults to current year, used with month)" },
+                { name: "month", type: "number", required: false, description: "Month 1-12 (defaults to current month)" },
+              ]}
+              exampleResponse={`{
+  "success": true,
+  "data": {
+    "id": "65f...",
+    "date": "2026-02-17",
+    "savers": {
+      "silence": true,
+      "affirmations": true,
+      "visualization": false,
+      "exercise": true,
+      "reading": true,
+      "scribing": false,
+      "score": "4/6"
+    },
+    "vices": {
+      "cokeFree": true,
+      "beerFree": true,
+      "weedFree": true,
+      "snsFree": false,
+      "pornFree": true,
+      "score": "4/5"
+    },
+    "dailyAffirmation": "I am unstoppable.",
+    "notes": "Great day overall.",
+    "moodRating": 8,
+    "energyLevel": 7
+  }
+}`}
+            />
+
+            <EndpointCard
+              method="POST"
+              path="/api/v1/calendar"
+              description="Create or update a daily tracking entry for a specific date. Fields not provided default to false/null."
+              bodyParams={[
+                { name: "date", type: "string", required: true, description: "Date in YYYY-MM-DD format" },
+                { name: "saversSilence", type: "boolean", required: false, description: "Meditation completed" },
+                { name: "saversAffirmations", type: "boolean", required: false, description: "Affirmations completed" },
+                { name: "saversVisualization", type: "boolean", required: false, description: "Visualization completed" },
+                { name: "saversExercise", type: "boolean", required: false, description: "Exercise completed" },
+                { name: "saversReading", type: "boolean", required: false, description: "Reading completed" },
+                { name: "saversScribing", type: "boolean", required: false, description: "Journaling completed" },
+                { name: "viceFreeCoke", type: "boolean", required: false, description: "Soda/cola free" },
+                { name: "viceFreeBeer", type: "boolean", required: false, description: "Alcohol free" },
+                { name: "viceFreeWeed", type: "boolean", required: false, description: "Cannabis free" },
+                { name: "viceFreeSns", type: "boolean", required: false, description: "SNS free (<30min)" },
+                { name: "viceFreePorn", type: "boolean", required: false, description: "Porn free" },
+                { name: "dailyAffirmation", type: "string", required: false, description: "Daily affirmation text" },
+                { name: "notes", type: "string", required: false, description: "Free-form notes" },
+                { name: "moodRating", type: "number", required: false, description: "Mood rating (e.g. 1-10)" },
+                { name: "energyLevel", type: "number", required: false, description: "Energy level (e.g. 1-10)" },
+              ]}
+              exampleResponse={`{
+  "success": true,
+  "data": {
+    "id": "65f...",
+    "date": "2026-02-17",
+    "savers": { "silence": true, ... , "score": "5/6" },
+    "vices": { "cokeFree": true, ... , "score": "5/5" },
+    "dailyAffirmation": "I am unstoppable.",
+    "notes": null,
+    "moodRating": 8,
+    "energyLevel": 7
+  }
+}`}
+            />
+
+            <EndpointCard
+              method="GET"
+              path="/api/v1/calendar/streaks"
+              description="Get current and best streaks for each SAVERS habit, each vice, and combined metrics (All SAVERS, Zero Vices, Perfect Day). Based on last 90 days of data."
+              exampleResponse={`{
+  "success": true,
+  "streaks": {
+    "savers": {
+      "silence": { "current": 12, "best": 30, "lastDate": "2026-02-17", "label": "Meditation", "icon": "🧘" },
+      "affirmations": { "current": 5, "best": 20, ... },
+      ...
+    },
+    "vices": {
+      "coke": { "current": 45, "best": 45, "lastDate": "2026-02-17", "label": "Soda Free", "icon": "🥤" },
+      ...
+    },
+    "combined": {
+      "allSavers": { "current": 3, "best": 14, "label": "All SAVERS", "icon": "🌟" },
+      "allVices": { "current": 20, "best": 30, "label": "Zero Vices", "icon": "🛡️" },
+      "perfectDay": { "current": 2, "best": 7, "label": "Perfect Day", "icon": "👑" }
+    }
+  }
+}`}
+            />
+          </div>
         </section>
 
         {/* Protocols - Coming Soon */}

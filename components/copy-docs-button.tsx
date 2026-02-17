@@ -280,15 +280,125 @@ Update a challenge's title, description, or status.
 
 ---
 
-## 📅 Calendar / Daily Tracking (Coming Soon)
+## 📅 Calendar / Daily Tracking
 
-The Calendar API will allow you to programmatically log your daily SAVERS protocol, vice tracking, mood, energy levels, and notes.
+Log your daily SAVERS protocol, vice tracking, mood, energy levels, notes, and view streaks.
 
-| Method | Endpoint | Description | Status |
-|--------|----------|-------------|--------|
-| GET | /api/v1/calendar | Get daily tracking data | Coming Soon |
-| POST | /api/v1/calendar | Log a daily entry | Coming Soon |
-| GET | /api/v1/calendar/streaks | Get streak data | Coming Soon |
+### GET /api/v1/calendar
+
+Get daily tracking data. Pass a single date to get one day, or year/month for the full month.
+
+**Query Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| date | string | No | Single date YYYY-MM-DD (returns one day) |
+| year | number | No | Year (defaults to current year, used with month) |
+| month | number | No | Month 1-12 (defaults to current month) |
+
+**Example Response (single day):**
+
+\`\`\`json
+{
+  "success": true,
+  "data": {
+    "id": "65f...",
+    "date": "2026-02-17",
+    "savers": {
+      "silence": true,
+      "affirmations": true,
+      "visualization": false,
+      "exercise": true,
+      "reading": true,
+      "scribing": false,
+      "score": "4/6"
+    },
+    "vices": {
+      "cokeFree": true,
+      "beerFree": true,
+      "weedFree": true,
+      "snsFree": false,
+      "pornFree": true,
+      "score": "4/5"
+    },
+    "dailyAffirmation": "I am unstoppable.",
+    "notes": "Great day overall.",
+    "moodRating": 8,
+    "energyLevel": 7
+  }
+}
+\`\`\`
+
+### POST /api/v1/calendar
+
+Create or update a daily tracking entry for a specific date. Fields not provided default to false/null.
+
+**Body Parameters (JSON):**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| date | string | Yes | Date in YYYY-MM-DD format |
+| saversSilence | boolean | No | Meditation completed |
+| saversAffirmations | boolean | No | Affirmations completed |
+| saversVisualization | boolean | No | Visualization completed |
+| saversExercise | boolean | No | Exercise completed |
+| saversReading | boolean | No | Reading completed |
+| saversScribing | boolean | No | Journaling completed |
+| viceFreeCoke | boolean | No | Soda/cola free |
+| viceFreeBeer | boolean | No | Alcohol free |
+| viceFreeWeed | boolean | No | Cannabis free |
+| viceFreeSns | boolean | No | SNS free (<30min) |
+| viceFreePorn | boolean | No | Porn free |
+| dailyAffirmation | string | No | Daily affirmation text |
+| notes | string | No | Free-form notes |
+| moodRating | number | No | Mood rating (e.g. 1-10) |
+| energyLevel | number | No | Energy level (e.g. 1-10) |
+
+**Example Response:**
+
+\`\`\`json
+{
+  "success": true,
+  "data": {
+    "id": "65f...",
+    "date": "2026-02-17",
+    "savers": { "silence": true, ..., "score": "5/6" },
+    "vices": { "cokeFree": true, ..., "score": "5/5" },
+    "dailyAffirmation": "I am unstoppable.",
+    "notes": null,
+    "moodRating": 8,
+    "energyLevel": 7
+  }
+}
+\`\`\`
+
+### GET /api/v1/calendar/streaks
+
+Get current and best streaks for each SAVERS habit, each vice, and combined metrics (All SAVERS, Zero Vices, Perfect Day). Based on last 90 days of data.
+
+**Example Response:**
+
+\`\`\`json
+{
+  "success": true,
+  "streaks": {
+    "savers": {
+      "silence": { "current": 12, "best": 30, "lastDate": "2026-02-17", "label": "Meditation", "icon": "🧘" },
+      "affirmations": { "current": 5, "best": 20, ... },
+      ...
+    },
+    "vices": {
+      "coke": { "current": 45, "best": 45, "lastDate": "2026-02-17", "label": "Soda Free", "icon": "🥤" },
+      ...
+    },
+    "combined": {
+      "allSavers": { "current": 3, "best": 14, "label": "All SAVERS", "icon": "🌟" },
+      "allVices": { "current": 20, "best": 30, "label": "Zero Vices", "icon": "🛡️" },
+      "perfectDay": { "current": 2, "best": 7, "label": "Perfect Day", "icon": "👑" }
+    }
+  }
+}
+\`\`\`
 
 ---
 
